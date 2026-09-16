@@ -10,9 +10,9 @@ new chat doesn't need to know anything about the conversation that produced this
   them by clicking around.
 - **Use Agent mode**, and let it run commands. It needs to install packages, run migrations, and
   push to git.
-- **Attach the design spec.** Before Prompt 2, copy [design.md](design.md) into the new project as
-  `docs/design.md` and reference it with `@docs/design.md` whenever you build a screen. Prompts that
-  need it say so.
+- **Attach the design spec.** Before Prompt 1, copy [design.md](design.md) into the new project as
+  `docs/design.md`. It is the single source of truth for every visual and interaction decision.
+  Reference it with `@docs/design.md` whenever you build or revise a screen.
 - **Don't paste your API keys into chat.** Put them in `.env.local` yourself. The prompts tell the
   agent to expect them there.
 - **When something's wrong, describe the symptom, not your guess at the cause.** "The mastery bar
@@ -65,6 +65,11 @@ prefaced with: "Put this in `.cursor/rules/project.mdc` and follow it for the re
 > questions generated from that material, answer them in free text, get graded, and have weak topics
 > resurface via spaced repetition.
 >
+> Before designing anything, read `@docs/design.md` in full. It defines the chosen Editorial Academic
+> direction and is the single source of truth for visual design, interactions, states, copy, and
+> responsive behavior. Follow it rather than shadcn defaults. If another instruction conflicts with
+> it on design, `@docs/design.md` wins.
+>
 > Stack — use exactly this:
 >
 > - Next.js with the App Router and TypeScript, in strict mode
@@ -79,10 +84,10 @@ prefaced with: "Put this in `.cursor/rules/project.mdc` and follow it for the re
 >
 > Then build the design system and app shell, but no features yet:
 >
-> - Set up the font (Geist Sans for UI) and a Tailwind theme with CSS variables for both light and
->   dark mode. Use a warm off-white surface rather than pure white, near-black text rather than pure
->   black, and one accent color — a deep indigo. Add semantic colors for mastery state: neutral for
->   "new", amber for "learning", orange-red for "shaky", green for "solid".
+> - Set up the two-family typography and Editorial Academic color system specified in
+>   `@docs/design.md`: an editorial serif for content, Geist Sans for interface text, warm ivory
+>   surfaces, deep ink text, muted burgundy actions, hairline rules, and accessible semantic colors.
+>   Implement both light and dark themes. Do not substitute a blue or purple SaaS palette.
 > - Build the app shell: a header with the app name, a theme toggle, and navigation to Library (`/`),
 >   Study (`/study`), and Progress (`/progress`). On mobile this becomes a bottom navigation bar with
 >   three items instead of a header nav.
