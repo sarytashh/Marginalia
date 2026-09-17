@@ -1,6 +1,6 @@
 import { batchItems, EMBEDDING_BATCH_SIZE } from "@/lib/ai/batch";
-import { createAiClient } from "@/lib/ai/client";
-import { getAiEnv } from "@/lib/ai/env";
+import { createEmbeddingClient } from "@/lib/ai/client";
+import { getEmbeddingEnv } from "@/lib/ai/env";
 import { AiError, toAiError } from "@/lib/ai/errors";
 import { withRetry, type RetryOptions } from "@/lib/ai/retry";
 
@@ -14,8 +14,8 @@ export type EmbedTextsOptions = {
 };
 
 async function embedBatchWithProvider(input: string[]): Promise<number[][]> {
-  const env = getAiEnv();
-  const client = createAiClient();
+  const env = getEmbeddingEnv();
+  const client = createEmbeddingClient();
 
   try {
     const response = await client.embeddings.create({
@@ -41,7 +41,7 @@ export async function embedTexts(
 
   const embedBatch = options.embedBatch ?? embedBatchWithProvider;
   const maxBatchSize = options.maxBatchSize ?? EMBEDDING_BATCH_SIZE;
-  const dimensions = options.dimensions ?? getAiEnv().embeddingDimensions;
+  const dimensions = options.dimensions ?? getEmbeddingEnv().embeddingDimensions;
   const vectors: number[][] = [];
 
   for (const batch of batchItems(texts, maxBatchSize)) {

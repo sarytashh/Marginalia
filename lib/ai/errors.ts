@@ -56,7 +56,7 @@ export function toAiError(error: unknown): AiError {
   }
 
   if (status === 401 || status === 403) {
-    return new AiError("The study model rejected the request. Check that AI_API_KEY is set in .env.local.", {
+    return new AiError("The study model rejected the request. Check the matching AI_*_API_KEY in .env.local.", {
       cause: error,
       retryable: false,
       status,

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { createAiClient } from "@/lib/ai/client";
-import { getAiEnv } from "@/lib/ai/env";
+import { createChatClient } from "@/lib/ai/client";
+import { getChatEnv } from "@/lib/ai/env";
 import { AiError, toAiError } from "@/lib/ai/errors";
 import { JSON_OUTPUT_SYSTEM_PROMPT } from "@/lib/ai/prompts";
 import { withRetry } from "@/lib/ai/retry";
@@ -25,8 +25,8 @@ async function completeJsonWithProvider(input: {
   user: string;
   temperature: number;
 }): Promise<string> {
-  const env = getAiEnv();
-  const client = createAiClient();
+  const env = getChatEnv();
+  const client = createChatClient();
 
   try {
     const response = await client.chat.completions.create({

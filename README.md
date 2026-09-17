@@ -23,14 +23,20 @@ _Coming soon._
 The Library, Study, and Progress routes are still placeholders. The data and model layers are in place:
 
 - **Supabase.** Profiles, documents, 1024-dimension page chunks, topics, grounded questions (`source_chunk_ids`), attempts, and spaced-repetition `review_state`, with Row Level Security and a private `documents` storage bucket. Vector search uses the `match_chunks` RPC.
-- **AI provider.** Chat and embeddings go through the official `openai` client pointed at whatever OpenAI-compatible endpoint you set. Helpers `embedTexts` (batches of 32, retries on 429/5xx) and `completeStructured` (Zod-validated JSON, one repair retry) live in `lib/ai/`. System prompts live in `lib/ai/prompts/` so they can be reviewed in git.
+- **AI providers.** Chat and embeddings are separate OpenAI-compatible clients, so a chat-only host such as DeepSeek is not asked for vectors. `embedTexts` batches 32 inputs and retries 429/5xx; `completeStructured` validates JSON with Zod and retries once on a schema miss. System prompts live in `lib/ai/prompts/`.
 
 Environment variables (see `.env.example`; put real values only in `.env.local`):
 
 - Supabase: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- AI: `AI_BASE_URL`, `AI_API_KEY`, `AI_CHAT_MODEL`, `AI_EMBEDDING_MODEL`, `AI_EMBEDDING_DIMENSIONS`
+- Chat: `AI_CHAT_BASE_URL`, `AI_CHAT_API_KEY`, `AI_CHAT_MODEL`
+- Embeddings: `AI_EMBEDDING_BASE_URL`, `AI_EMBEDDING_API_KEY`, `AI_EMBEDDING_MODEL`, `AI_EMBEDDING_DIMENSIONS`
 
-SiliconFlow values that work from mainland China: `AI_BASE_URL=https://api.siliconflow.cn/v1`, `AI_CHAT_MODEL=deepseek-ai/DeepSeek-V3`, `AI_EMBEDDING_MODEL=BAAI/bge-m3`, `AI_EMBEDDING_DIMENSIONS=1024`. After those are set, run `pnpm ai:check` to confirm both endpoints respond.
+Recommended split for mainland China without a Chinese ID:
+
+- Chat: DeepSeek (`https://api.deepseek.com/v1`, model `deepseek-chat`)
+- Embeddings: local Ollama `bge-m3` (`http://127.0.0.1:11434/v1`, 1024 dimensions). Install Ollama, run `ollama pull bge-m3`, then set `AI_EMBEDDING_API_KEY` to any non-empty dummy such as `ollama`. Local embeddings avoid SiliconFlow/DashScope real-name signup.
+
+`pnpm ai:check` pings chat and embeddings independently and still prints both results if only one side fails.
 
 Apply `supabase/migrations/20260917100000_initial_schema.sql` once in the Supabase SQL Editor if you have not already.
 
