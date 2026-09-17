@@ -1,4 +1,4 @@
-# Project rules for the Recall repo
+# Project rules for the Marginalia repo
 
 Send this as a follow-up message right after Prompt 0, prefaced with:
 "Put this in `.cursor/rules/project.mdc` and follow it for the rest of the project."
@@ -9,11 +9,11 @@ codebase that looks like four people wrote it.
 
 ---
 
-    # Recall — project rules
+    # Marginalia — project rules
 
     ## What this project is
 
-    Recall is an AI study tutor. Users upload lecture-slide PDFs; the app extracts and embeds the
+    Marginalia is an AI study tutor. Users upload lecture-slide PDFs; the app extracts and embeds the
     text, generates practice questions grounded strictly in that material, grades free-text answers,
     and schedules reviews with spaced repetition.
 

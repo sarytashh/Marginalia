@@ -1,6 +1,6 @@
-# Recall — build guide for an AI study tutor
+# Marginalia — build guide for an AI study tutor
 
-This repository holds the planning material for **Recall**, an AI study tutor you upload your
+This repository holds the planning material for **Marginalia**, an AI study tutor you upload your
 lecture slides to. It generates practice questions from *your* material, grades your written
 answers, and schedules what to review based on what you keep getting wrong.
 

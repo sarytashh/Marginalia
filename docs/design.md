@@ -1,7 +1,7 @@
-# Recall — complete product design specification
+# Marginalia — complete product design specification
 
 This document is the single source of truth for the visual design, interaction design, content,
-responsive behavior, and application states of Recall.
+responsive behavior, and application states of Marginalia.
 
 It is written for the AI coding agent implementing the product. Follow it across every screen.
 Do not invent a different visual direction, fall back to generic shadcn defaults, or treat this as
@@ -10,7 +10,7 @@ document wins.
 
 ## 1. Product and experience
 
-Recall is an AI study tutor. A student uploads lecture PDFs, Recall turns them into grounded
+Marginalia is an AI study tutor. A student uploads lecture PDFs, Marginalia turns them into grounded
 practice questions, grades free-text answers, and schedules weak material for review.
 
 The product should feel like a beautifully typeset academic journal made interactive: thoughtful,
@@ -30,11 +30,15 @@ At every point, the interface should answer:
 
 - Where am I?
 - What should I do next?
-- What is Recall doing?
-- Why did Recall produce this question or grade?
+- What is Marginalia doing?
+- Why did Marginalia produce this question or grade?
 - Will my work be lost if something fails?
 
+
+
 ## 2. Chosen visual direction: Editorial Academic
+
+
 
 ### 2.1 Character
 
@@ -62,6 +66,8 @@ The signature visual elements are:
 - small page, chapter, and issue-like metadata;
 - generous negative space.
 
+
+
 ### 2.2 Explicitly avoid
 
 Do not use:
@@ -78,35 +84,43 @@ Do not use:
 - gamification such as confetti, coins, XP, trophies, or cartoon streak flames;
 - generic copy such as “Welcome back,” “Unlock your potential,” or “No data found.”
 
+
+
 ## 3. Design foundations
+
+
 
 ### 3.1 Color
 
 Light mode is the primary art direction.
 
-| Role | Color | Usage |
-| --- | --- | --- |
-| Canvas | warm ivory, approximately `#F4F0E8` | page background |
-| Paper | soft cream, approximately `#FBF9F4` | reading surfaces and focused content |
-| Ink | deep brown-black, approximately `#211E1B` | primary text |
-| Muted ink | warm gray-brown, approximately `#716A62` | metadata and secondary copy |
-| Rule | warm gray, approximately `#D8D0C5` | borders and separators |
-| Primary | muted burgundy, approximately `#7D2E3B` | primary actions, active navigation, focus |
-| Primary hover | deep burgundy, approximately `#652430` | hover and pressed state |
-| Selection | pale rose, approximately `#EAD9DC` | selected rows and text highlights |
+
+| Role          | Color                                     | Usage                                     |
+| ------------- | ----------------------------------------- | ----------------------------------------- |
+| Canvas        | warm ivory, approximately `#F4F0E8`       | page background                           |
+| Paper         | soft cream, approximately `#FBF9F4`       | reading surfaces and focused content      |
+| Ink           | deep brown-black, approximately `#211E1B` | primary text                              |
+| Muted ink     | warm gray-brown, approximately `#716A62`  | metadata and secondary copy               |
+| Rule          | warm gray, approximately `#D8D0C5`        | borders and separators                    |
+| Primary       | muted burgundy, approximately `#7D2E3B`   | primary actions, active navigation, focus |
+| Primary hover | deep burgundy, approximately `#652430`    | hover and pressed state                   |
+| Selection     | pale rose, approximately `#EAD9DC`        | selected rows and text highlights         |
+
 
 Semantic colors are reserved for feedback and mastery. Never use them decoratively.
 
-| State | Color family | Required text label |
-| --- | --- | --- |
-| New | warm gray | New |
-| Learning | ochre | Learning |
-| Shaky | muted rust | Needs review |
-| Solid | forest green | Solid |
-| Correct | forest green | Correct |
-| Partial | ochre | Partially correct |
-| Incorrect | muted rust | Incorrect |
-| Processing | burgundy | Current processing step |
+
+| State      | Color family | Required text label     |
+| ---------- | ------------ | ----------------------- |
+| New        | warm gray    | New                     |
+| Learning   | ochre        | Learning                |
+| Shaky      | muted rust   | Needs review            |
+| Solid      | forest green | Solid                   |
+| Correct    | forest green | Correct                 |
+| Partial    | ochre        | Partially correct       |
+| Incorrect  | muted rust   | Incorrect               |
+| Processing | burgundy     | Current processing step |
+
 
 Every semantic color must be paired with a word, icon, pattern, or value. Color alone must never
 carry meaning.
@@ -128,10 +142,10 @@ Dark mode must preserve hierarchy and paper-versus-canvas layering. Do not simpl
 
 Use two type families and give each a strict role:
 
-- **Editorial serif:** Instrument Serif, Source Serif 4, or Newsreader. Used for the Recall wordmark,
-  page titles, document titles, questions, major numbers, and quotations from source material.
+- **Editorial serif:** Instrument Serif, Source Serif 4, or Newsreader. Used for the Marginalia wordmark,
+page titles, document titles, questions, major numbers, and quotations from source material.
 - **Interface sans-serif:** Geist Sans or Inter. Used for navigation, buttons, labels, form fields,
-  metadata, tables, status text, and explanatory copy.
+metadata, tables, status text, and explanatory copy.
 
 Typography creates most of the visual identity. Do not replace serif display text with bold sans.
 
@@ -178,6 +192,8 @@ where metadata or context can sit in a narrow margin beside the main reading are
 - Focused reading surfaces can use a barely perceptible shadow plus a border.
 - Buttons are rectangular, compact, and purposeful—not pill-shaped.
 
+
+
 ### 3.5 Iconography
 
 Use a single restrained outline icon set. Icons are 16–18px and normally accompany a label.
@@ -199,11 +215,13 @@ Respect `prefers-reduced-motion` and remove nonessential transitions.
 
 ## 4. Global application structure
 
+
+
 ### 4.1 Desktop header
 
 The header is a thin editorial masthead, not a conventional SaaS navbar.
 
-- Left: serif Recall wordmark.
+- Left: serif Marginalia wordmark.
 - Center or left-center: Library, Study, Progress.
 - Right: compact due count such as “12 due,” theme control, and profile menu.
 - A hairline rule runs beneath the header.
@@ -221,7 +239,9 @@ Use a bottom navigation bar with Library, Study, and Progress.
 - The active item uses burgundy plus a short top rule.
 - Respect device safe areas.
 - During an active session, replace normal bottom navigation with the answer action area so the
-  keyboard and submit control remain reachable.
+keyboard and submit control remain reachable.
+
+
 
 ### 4.3 Global feedback
 
@@ -231,13 +251,17 @@ Use a bottom navigation bar with Library, Study, and Progress.
 - A toast may confirm secondary actions such as rename or copy.
 - Never use a toast for information the user must act on; place that message inline.
 
+
+
 ## 5. Authentication
+
+
 
 ### 5.1 Sign in
 
 The sign-in page should resemble the opening page of a journal.
 
-- Small Recall wordmark at top.
+- Small Marginalia wordmark at top.
 - Large serif heading: “Return to your studies.”
 - Short sans-serif explanation of the magic-link flow.
 - One email field and one burgundy “Send sign-in link” button.
@@ -250,9 +274,11 @@ Actions and states:
 - Invalid email: show a precise inline message directly beneath the field.
 - Sending: retain the entered email, disable duplicate submit, change button text to “Sending…”.
 - Success: replace the form with “Check your inbox” and show the destination email. Include
-  “Use a different email.”
+“Use a different email.”
 - Expired or invalid link: explain what happened and offer a new link.
 - Provider/network error: keep the email and provide Retry.
+
+
 
 ### 5.2 First entry
 
@@ -314,12 +340,12 @@ This is the real onboarding screen.
 Use an asymmetric two-column composition:
 
 - main column: large serif heading “Turn your lecture slides into questions you can answer.”
-- short explanation: “Upload a PDF. Recall reads the text, finds its topics, and prepares a study
-  session grounded in your own material.”
+- short explanation: “Upload a PDF. Marginalia reads the text, finds its topics, and prepares a study
+session grounded in your own material.”
 - broad ruled drop zone styled like an empty manuscript page;
 - primary action “Choose a PDF” and secondary instruction “or drop it anywhere on this page.”
 - side note titled “WHAT HAPPENS NEXT” with three numbered steps: Read pages, Find topics, Prepare
-  questions.
+questions.
 
 Do not use an illustration or the phrase “No documents.”
 
@@ -336,8 +362,10 @@ When a valid file enters the browser:
 Invalid file:
 
 - use a muted rust rule;
-- explain “Recall currently reads text-based PDFs up to 20 MB.”
+- explain “Marginalia currently reads text-based PDFs up to 20 MB.”
 - do not upload automatically.
+
+
 
 ### 6.5 Upload sequence
 
@@ -379,7 +407,7 @@ Failure:
 
 For a scanned PDF with no text:
 
-“Recall could not find readable text in this PDF. It may contain scanned images instead of a text
+“Marginalia could not find readable text in this PDF. It may contain scanned images instead of a text
 layer. Try a text-based PDF.”
 
 ## 8. Document detail — `/documents/[id]`
@@ -417,6 +445,8 @@ Actions:
 - “Study topic” begins a filtered session.
 - “Generate more” appears only when appropriate.
 - Weak topics are sorted first by default; provide “Document order” as an alternate sort.
+
+
 
 ### 8.3 Question archive
 
@@ -482,7 +512,7 @@ This is the product’s most important screen. It becomes a focused reading page
 Desktop:
 
 - simplified top masthead;
-- left: Recall wordmark that does not navigate accidentally;
+- left: Marginalia wordmark that does not navigate accidentally;
 - center: thin progress rule and “04 of 10”;
 - right: “End session” text action;
 - main question in a 680–720px reading column;
@@ -494,6 +524,8 @@ Mobile:
 - question uses the full content width with 18–20px margins;
 - submit action stays reachable above the software keyboard;
 - no normal bottom navigation while the session is active.
+
+
 
 ### 10.2 Question anatomy
 
@@ -514,7 +546,8 @@ Before answering, the user may open the source:
 
 - label uses a small page/document icon and exact page;
 - expansion reveals a cream excerpt block with a burgundy left rule;
-- source text is serif body copy;
+- heck answer.”
+Shortcut shown quietlsource text is serif body copy;
 - show enough surrounding context to understand the passage;
 - collapse action is obvious;
 - opening the source does not affect grading.
@@ -531,8 +564,7 @@ Do not hijack typing inside the textarea.
 - automatically focus on desktop, but avoid forcing the mobile keyboard open on page load;
 - preserve text until the attempt is successfully stored.
 
-Primary action: “Check answer.”
-Shortcut shown quietly: `⌘ Enter` or `Ctrl Enter`.
+Primary action: “Cy: `⌘ Enter` or `Ctrl Enter`.
 
 Empty submit does not trigger grading. Give subtle inline guidance rather than an error toast.
 
@@ -546,6 +578,8 @@ Options are full-width editorial rows labeled A–D.
 - keyboard keys `1–4` select;
 - Enter checks after selection;
 - no correctness color appears before submission.
+
+
 
 ### 10.6 Submitting and grading
 
@@ -561,7 +595,7 @@ If grading fails:
 
 - keep the user’s answer visible and locally preserved;
 - unlock Retry;
-- message: “Recall could not grade this answer right now. Your response is safe.”
+- message: “Marginalia could not grade this answer right now. Your response is safe.”
 - offer “Try grading again” and “Skip for now.”
 
 Never advance automatically after grading.
@@ -651,6 +685,8 @@ The Progress page should read like an analytical report, not a financial dashboa
 - one-sentence summary generated from actual data, not AI marketing copy;
 - date range control styled as compact text, not a giant dropdown.
 
+
+
 ### 12.2 Topic mastery
 
 This is the first and largest section.
@@ -705,9 +741,11 @@ Do not use flames or imply that missing one day is failure.
 ### 12.6 Empty progress
 
 - heading: “Your first answers will become a study map.”
-- explain that Recall will identify strong and weak topics after a few attempts;
+- explain that Marginalia will identify strong and weak topics after a few attempts;
 - primary “Start studying” if questions exist;
 - otherwise “Add material.”
+
+
 
 ## 13. Profile and preferences
 
@@ -740,6 +778,8 @@ generation, retrieval, grading, deletion, and progress loading—must implement 
 - If loading exceeds roughly two seconds, name the active operation.
 - Preserve the previous usable content during background refresh.
 
+
+
 ### 14.2 Empty
 
 An empty state explains:
@@ -764,9 +804,11 @@ Place Retry beside the message. Technical details belong in server logs, never i
 
 - Show a persistent narrow notice beneath the masthead.
 - Offline: “You appear to be offline. Your current answer will stay here.”
-- Rate limited: “The study model is busy. Recall will retry shortly.”
+- Rate limited: “The study model is busy. Marginalia will retry shortly.”
 - Actually retry with backoff where safe.
 - Never show provider names, status codes, or raw API messages to the student.
+
+
 
 ### 14.5 Optimistic actions
 
@@ -774,6 +816,8 @@ Use optimistic updates only when failure is reversible and understandable, such 
 pretend document processing, grading, or deletion succeeded before the server confirms it.
 
 ## 15. Dialogs, menus, and forms
+
+
 
 ### Dialogs
 
@@ -783,6 +827,8 @@ pretend document processing, grading, or deletion succeeded before the server co
 - Destructive action is never the default focused control.
 - Escape closes nondestructive dialogs.
 
+
+
 ### Menus
 
 - Warm paper surface;
@@ -790,6 +836,8 @@ pretend document processing, grading, or deletion succeeded before the server co
 - destructive items separated by a rule;
 - full keyboard navigation;
 - never hide the principal action only inside a menu.
+
+
 
 ### Forms
 
@@ -799,7 +847,11 @@ pretend document processing, grading, or deletion succeeded before the server co
 - Keep entered values after errors.
 - Required fields are clear without filling every label with an asterisk.
 
+
+
 ## 16. Responsive behavior
+
+
 
 ### Desktop, 1024px and above
 
@@ -809,12 +861,16 @@ pretend document processing, grading, or deletion succeeded before the server co
 - open ruled sections;
 - hover states and keyboard shortcuts.
 
+
+
 ### Tablet, 768–1023px
 
 - Preserve masthead but tighten navigation;
 - collapse margin metadata into the main flow;
 - charts remain full width;
 - document rows may wrap metadata to a second line.
+
+
 
 ### Mobile, below 768px
 
@@ -846,9 +902,11 @@ Test the entire product at 375px, 768px, 1024px, and 1440px.
 - Motion honors reduced-motion preferences.
 - Serif display type is never used so small that readability suffers.
 
+
+
 ## 18. Content voice
 
-Recall speaks like a thoughtful tutor and careful editor.
+Marginalia speaks like a thoughtful tutor and careful editor.
 
 Voice:
 
@@ -861,7 +919,7 @@ Voice:
 
 Preferred:
 
-- “Recall is reading page 18 of 42.”
+- “Marginalia is reading page 18 of 42.”
 - “Your response is safe. Try grading again.”
 - “Two topics need another pass.”
 - “This question comes from page 14.”
