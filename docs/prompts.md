@@ -1,4 +1,4 @@
-# Recall — prompts to build it
+# Marginalia — prompts to build it
 
 Paste these into a fresh Cursor chat, **in order**, one at a time. Each one is self-contained, so the
 new chat doesn't need to know anything about the conversation that produced this document.
@@ -27,7 +27,7 @@ new chat doesn't need to know anything about the conversation that produced this
 
 Do this first. It sets up the repository and the rules the agent follows for the rest of the build.
 
-> I'm starting a new project called **Recall** — an AI study tutor. I upload my lecture slides as
+> I'm starting a new project called **Marginalia** — an AI study tutor. I upload my lecture slides as
 > PDFs, and it generates practice questions from my material, grades my written answers, and uses
 > spaced repetition to decide what I should review next. I'm a first-year CS student and this is a
 > portfolio project, so I care about the code and the git history being something I'd be happy to
@@ -43,7 +43,7 @@ Do this first. It sets up the repository and the rules the agent follows for the
 > 4. Create `.cursor/rules/project.mdc` containing the project rules I'll paste in a moment as a
 >    follow-up message — for now just create the file with a heading.
 > 5. Make the first commit, and tell me the exact commands I need to run to connect this to a new
->    GitHub repository and push, assuming I've created an empty repo on GitHub named `recall`. Also
+>    GitHub repository and push, assuming I've created an empty repo on GitHub named `Marginalia`. Also
 >    tell me whether the GitHub CLI (`gh`) is available here, and if so, offer to create the repo for
 >    me directly.
 >
@@ -61,7 +61,7 @@ prefaced with: "Put this in `.cursor/rules/project.mdc` and follow it for the re
 
 ## Prompt 1 — scaffold and design system
 
-> Scaffold the Recall app. Recall is an AI study tutor: upload lecture-slide PDFs, get practice
+> Scaffold the Marginalia app. Marginalia is an AI study tutor: upload lecture-slide PDFs, get practice
 > questions generated from that material, answer them in free text, get graded, and have weak topics
 > resurface via spaced repetition.
 >
@@ -102,7 +102,7 @@ prefaced with: "Put this in `.cursor/rules/project.mdc` and follow it for the re
 
 ## Prompt 2 — database and Supabase
 
-> Set up the data layer for Recall using Supabase (Postgres with the `pgvector` extension).
+> Set up the data layer for Marginalia using Supabase (Postgres with the `pgvector` extension).
 >
 > I'll create the Supabase project myself. Tell me exactly which values to put in `.env.local`, and
 > create a `.env.example` documenting every variable with empty values. Expect these:
@@ -148,7 +148,7 @@ prefaced with: "Put this in `.cursor/rules/project.mdc` and follow it for the re
 
 This is the step that saves you from being locked to a provider that doesn't work from China.
 
-> Build the AI provider layer for Recall. Important constraint: I'm in mainland China, so the OpenAI
+> Build the AI provider layer for Marginalia. Important constraint: I'm in mainland China, so the OpenAI
 > API is not reachable for me. I'm using **SiliconFlow**, which is OpenAI-protocol-compatible.
 >
 > Create `lib/ai/client.ts` that instantiates the official `openai` npm package but with `baseURL`
@@ -183,7 +183,7 @@ This is the step that saves you from being locked to a provider that doesn't wor
 
 ## Prompt 4 — upload and PDF parsing
 
-> Build PDF upload and text extraction for Recall. Read `@docs/design.md` and follow it.
+> Build PDF upload and text extraction for Marginalia. Read `@docs/design.md` and follow it.
 >
 > Flow: the user drops a PDF on the Library page. It uploads to Supabase Storage under their user id,
 > creates a `documents` row with status `uploaded`, then a server-side pipeline extracts the text.
@@ -213,7 +213,7 @@ This is the step that saves you from being locked to a provider that doesn't wor
 
 ## Prompt 5 — chunking, embeddings, and retrieval
 
-> Continue the Recall document pipeline: after text extraction, chunk and embed the document.
+> Continue the Marginalia document pipeline: after text extraction, chunk and embed the document.
 >
 > - Chunk to roughly 800 tokens with about 100 tokens of overlap, splitting on paragraph and sentence
 >   boundaries rather than mid-sentence. Each chunk keeps its page number. Use `js-tiktoken` or a
@@ -240,7 +240,7 @@ This is the step that saves you from being locked to a provider that doesn't wor
 
 This is the quality-critical step. The grounding rule is the whole point.
 
-> Build topic extraction and question generation for Recall.
+> Build topic extraction and question generation for Marginalia.
 >
 > **Topics.** After embedding, sample representative chunks across the document and ask the chat model
 > to return 5 to 12 topics, each with a name and a one-sentence summary. Validate with Zod, insert into
@@ -276,7 +276,7 @@ This is the quality-critical step. The grounding rule is the whole point.
 
 ## Prompt 7 — the study session
 
-> Build the study session for Recall at `/study`. Read `@docs/design.md` carefully and follow the
+> Build the study session for Marginalia at `/study`. Read `@docs/design.md` carefully and follow the
 > Study session section closely — this is the most important screen in the app and it should be
 > deliberately spare.
 >
@@ -306,7 +306,7 @@ This is the quality-critical step. The grounding rule is the whole point.
 
 ## Prompt 8 — grading and feedback
 
-> Add AI grading to the Recall study session.
+> Add AI grading to the Marginalia study session.
 >
 > When the user submits a short answer, call the chat model with the question, the reference answer,
 > the source chunks the question came from, and the user's answer. Return, validated with Zod:
@@ -343,7 +343,7 @@ This is the quality-critical step. The grounding rule is the whole point.
 
 This is the step with the best tests-to-effort ratio in the project. Don't skip the tests.
 
-> Implement the spaced repetition scheduler for Recall in `lib/scheduler.ts`. Write it as a **pure
+> Implement the spaced repetition scheduler for Marginalia in `lib/scheduler.ts`. Write it as a **pure
 > function** — no database access, no side effects — so it's fully testable:
 >
 >     schedule(current: ReviewState, score: number, now: Date): ReviewState
@@ -376,7 +376,7 @@ This is the step with the best tests-to-effort ratio in the project. Don't skip 
 
 ## Prompt 10 — progress dashboard
 
-> Build the Recall progress dashboard at `/progress`, following `@docs/design.md`.
+> Build the Marginalia progress dashboard at `/progress`, following `@docs/design.md`.
 >
 > - A grid of topic cards across all documents, **sorted weakest first**, each showing the topic name,
 >   its document, a mastery bar, a state label, question count, and how many are due. Sorting weakest
@@ -398,7 +398,7 @@ This is the step with the best tests-to-effort ratio in the project. Don't skip 
 
 ## Prompt 11 — auth
 
-> Add authentication to Recall using Supabase Auth with email magic links.
+> Add authentication to Marginalia using Supabase Auth with email magic links.
 >
 > - A sign-in page that's clean and minimal — email field, one button, a clear "check your inbox"
 >   confirmation state, and a visible error state for an invalid email.
@@ -415,7 +415,7 @@ This is the step with the best tests-to-effort ratio in the project. Don't skip 
 
 ## Prompt 12 — polish, README, and CI
 
-> Final pass on Recall before deploying. Go through the app and fix what isn't finished:
+> Final pass on Marginalia before deploying. Go through the app and fix what isn't finished:
 >
 > 1. **Every async surface** needs loading, empty, and error states, per `@docs/design.md`. Skeletons
 >    matching content shape, not centered spinners. Named steps for anything over two seconds. Human
@@ -443,7 +443,7 @@ This is the step with the best tests-to-effort ratio in the project. Don't skip 
 
 ## Prompt 13 — deploy
 
-> Deploy Recall and get me a working live URL.
+> Deploy Marginalia and get me a working live URL.
 >
 > Walk me through deploying to Vercel: which environment variables to set, and what to check
 > afterwards. One thing to handle: I'm in mainland China, and `*.vercel.app` domains are intermittently
@@ -483,7 +483,7 @@ Keep these for when things go sideways, or for after v1 is live.
 
 **The eval set, as its own step (strongly recommended once v1 works):**
 
-> Build an evaluation harness for Recall's AI features. Create a fixtures directory with 15 to 20
+> Build an evaluation harness for Marginalia's AI features. Create a fixtures directory with 15 to 20
 > hand-labelled examples: for grading, a question plus reference answer plus a user answer plus the
 > score I think it deserves; for generation, a set of chunks plus a note on whether a produced
 > question is properly grounded in them. Write a script `pnpm eval` that runs the real model against
