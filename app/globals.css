@@ -1,0 +1,219 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* Editorial Academic surfaces and ink */
+  --color-canvas: var(--canvas);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-muted-ink: var(--muted-ink);
+  --color-rule: var(--rule);
+  --color-burgundy: var(--burgundy);
+  --color-burgundy-hover: var(--burgundy-hover);
+  --color-selection: var(--selection);
+
+  /* Mastery and feedback. Never used without an accompanying word. */
+  --color-state-new: var(--state-new);
+  --color-state-learning: var(--state-learning);
+  --color-state-shaky: var(--state-shaky);
+  --color-state-solid: var(--state-solid);
+  --color-state-processing: var(--burgundy);
+
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-serif);
+
+  /* Reading measure, per design.md 3.3 */
+  --container-reading: 45rem;
+  --container-wide: 70rem;
+  --container-app: 75rem;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Source Serif 4 Variable", ui-serif, Georgia, serif;
+
+  /* 4px keeps every surface in the 2-4px editorial range once scaled. */
+  --radius: 0.25rem;
+
+  --canvas: #f4f0e8;
+  --paper: #fbf9f4;
+  --ink: #211e1b;
+  --muted-ink: #6b6459;
+  --rule: #d8d0c5;
+  --burgundy: #7d2e3b;
+  --burgundy-hover: #652430;
+  --selection: #ead9dc;
+
+  --state-new: #6b6459;
+  --state-learning: #845c12;
+  --state-shaky: #96412b;
+  --state-solid: #356043;
+
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--burgundy);
+  --primary-foreground: var(--paper);
+  --secondary: #ebe5da;
+  --secondary-foreground: var(--ink);
+  --muted: #ebe5da;
+  --muted-foreground: var(--muted-ink);
+  --accent: var(--selection);
+  --accent-foreground: var(--burgundy-hover);
+  --destructive: var(--state-shaky);
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--burgundy);
+  --chart-1: var(--burgundy);
+  --chart-2: #a35660;
+  --chart-3: var(--state-solid);
+  --chart-4: var(--state-learning);
+  --chart-5: var(--muted-ink);
+  --sidebar: var(--paper);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--burgundy);
+  --sidebar-primary-foreground: var(--paper);
+  --sidebar-accent: var(--selection);
+  --sidebar-accent-foreground: var(--burgundy-hover);
+  --sidebar-border: var(--rule);
+  --sidebar-ring: var(--burgundy);
+}
+
+/* Reading in a quiet archive at night: warm near-black, never navy. */
+.dark {
+  --canvas: #17140f;
+  --paper: #201c16;
+  --ink: #ede6d8;
+  --muted-ink: #a79e90;
+  --rule: #39332a;
+  --burgundy: #d98e9c;
+  --burgundy-hover: #e9a6b2;
+  --selection: #3c2a2e;
+
+  --state-new: #a79e90;
+  --state-learning: #d2a343;
+  --state-shaky: #de8a6c;
+  --state-solid: #7fb88c;
+
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--burgundy);
+  --primary-foreground: #1b1710;
+  --secondary: #2a251d;
+  --secondary-foreground: var(--ink);
+  --muted: #2a251d;
+  --muted-foreground: var(--muted-ink);
+  --accent: var(--selection);
+  --accent-foreground: var(--burgundy-hover);
+  --destructive: var(--state-shaky);
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--burgundy);
+  --chart-1: var(--burgundy);
+  --chart-2: #8d5a63;
+  --chart-3: var(--state-solid);
+  --chart-4: var(--state-learning);
+  --chart-5: var(--muted-ink);
+  --sidebar: var(--paper);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--burgundy);
+  --sidebar-primary-foreground: #1b1710;
+  --sidebar-accent: var(--selection);
+  --sidebar-accent-foreground: var(--burgundy-hover);
+  --sidebar-border: var(--rule);
+  --sidebar-ring: var(--burgundy);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-canvas text-ink;
+  }
+
+  ::selection {
+    background-color: var(--selection);
+    color: var(--ink);
+  }
+
+  /* Burgundy focus ring with a visible offset, per design.md 17. */
+  :focus-visible {
+    outline: 2px solid var(--burgundy);
+    outline-offset: 2px;
+  }
+
+  /* Editorial metadata: uppercase, tracked, small. */
+  .label-editorial {
+    @apply font-sans text-[0.6875rem] font-medium tracking-[0.12em] text-muted-ink uppercase;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
