@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+import {
+  MAX_QUESTIONS_PER_TOPIC,
+  MAX_TOPICS_PER_DOCUMENT,
+} from "@/lib/generation/limits";
+
 const topicItemSchema = z
   .object({
     name: z.string().optional(),
@@ -19,7 +24,7 @@ const topicItemSchema = z
     }),
   );
 
-const topicListSchema = z.array(topicItemSchema).max(12);
+const topicListSchema = z.array(topicItemSchema).max(MAX_TOPICS_PER_DOCUMENT);
 
 export const topicExtractionSchema = z.union([
   z.object({ topics: topicListSchema }),
@@ -88,8 +93,11 @@ const generatedQuestionSchema = z
   );
 
 export const questionGenerationSchema = z.union([
-  z.object({ questions: z.array(generatedQuestionSchema).max(8) }),
-  z.array(generatedQuestionSchema).max(8).transform((questions) => ({ questions })),
+  z.object({ questions: z.array(generatedQuestionSchema).max(MAX_QUESTIONS_PER_TOPIC) }),
+  z
+    .array(generatedQuestionSchema)
+    .max(MAX_QUESTIONS_PER_TOPIC)
+    .transform((questions) => ({ questions })),
 ]);
 
 export type ExtractedTopic = z.infer<typeof topicExtractionSchema>["topics"][number];

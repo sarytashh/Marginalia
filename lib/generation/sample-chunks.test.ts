@@ -13,7 +13,7 @@ describe("sampleRepresentativeChunks", () => {
 
   it("returns every chunk when the document is smaller than the cap", () => {
     const chunks = [chunk(2, "b"), chunk(1, "a"), chunk(3, "c")];
-    expect(sampleRepresentativeChunks(chunks, 12)).toEqual([
+    expect(sampleRepresentativeChunks(chunks)).toEqual([
       chunk(1, "a"),
       chunk(2, "b"),
       chunk(3, "c"),

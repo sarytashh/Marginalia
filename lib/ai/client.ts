@@ -13,8 +13,8 @@ function createOpenAiClient(apiKey: string, baseURL: string, timeout: number): O
 
 export function createChatClient(): OpenAI {
   const env = getChatEnv();
-  // Local qwen2.5:3b JSON for a topic's questions can exceed 60s.
-  return createOpenAiClient(env.apiKey, env.baseUrl, 180_000);
+  // Local qwen2.5:14b JSON for a topic's questions can exceed 60s.
+  return createOpenAiClient(env.apiKey, env.baseUrl, 300_000);
 }
 
 export function createEmbeddingClient(): OpenAI {

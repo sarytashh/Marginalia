@@ -1,6 +1,6 @@
 import { after } from "next/server";
 
-import { handleRouteError, jsonOk } from "@/lib/documents/http";
+import { DocumentError, handleRouteError, jsonOk } from "@/lib/documents/http";
 import { prepareQuestionGeneration } from "@/lib/documents/pipeline";
 
 export const runtime = "nodejs";
@@ -12,8 +12,8 @@ export async function POST(
 ) {
   try {
     const { id } = await context.params;
-    const topicId = await readTopicId(request);
-    const { document, job } = await prepareQuestionGeneration(id, topicId);
+    const options = await readGenerateOptions(request);
+    const { document, job } = await prepareQuestionGeneration(id, options);
     after(() => job());
     return jsonOk({ document });
   } catch (error) {
@@ -21,27 +21,56 @@ export async function POST(
   }
 }
 
-async function readTopicId(request: Request): Promise<string | undefined> {
+async function readGenerateOptions(
+  request: Request,
+): Promise<{ replace?: boolean; topicId?: string }> {
   const contentType = request.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) {
-    return undefined;
+    return {};
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return undefined;
+    return {};
   }
 
-  if (typeof body !== "object" || body === null || !("topicId" in body)) {
-    return undefined;
+  if (typeof body !== "object" || body === null) {
+    return {};
   }
 
-  const topicId = body.topicId;
-  if (typeof topicId !== "string" || topicId.trim() === "") {
-    return undefined;
+  const topicId = readOptionalString(body, "topicId");
+  const replace = readOptionalBoolean(body, "replace");
+
+  if (replace === true && topicId !== undefined) {
+    throw new DocumentError(
+      "Regenerate the whole material, or add questions to one topic — not both.",
+      400,
+    );
   }
 
-  return topicId.trim();
+  return {
+    ...(topicId === undefined ? {} : { topicId }),
+    ...(replace === undefined ? {} : { replace }),
+  };
+}
+
+function readOptionalString(body: object, key: string): string | undefined {
+  if (!(key in body)) {
+    return undefined;
+  }
+  const value = (body as Record<string, unknown>)[key];
+  if (typeof value !== "string" || value.trim() === "") {
+    return undefined;
+  }
+  return value.trim();
+}
+
+function readOptionalBoolean(body: object, key: string): boolean | undefined {
+  if (!(key in body)) {
+    return undefined;
+  }
+  const value = (body as Record<string, unknown>)[key];
+  return value === true;
 }
