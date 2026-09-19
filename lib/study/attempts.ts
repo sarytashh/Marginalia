@@ -4,6 +4,11 @@ import { AiError } from "@/lib/ai/errors";
 import { excerptPassage } from "@/lib/documents/format";
 import { DocumentError } from "@/lib/documents/http";
 import { getDocumentOwnerId } from "@/lib/documents/owner";
+import {
+  defaultReviewState,
+  schedule,
+  type ReviewState,
+} from "@/lib/scheduler";
 import { GRADE_FAILED_MESSAGE } from "@/lib/study/constants";
 import { gradeShortAnswer } from "@/lib/study/grade-ai";
 import {
@@ -61,6 +66,12 @@ export async function gradeAndRecordAttempt(
     console.error(insertError);
     throw new DocumentError(GRADE_FAILED_MESSAGE, 500);
   }
+
+  await persistReviewState(supabase, {
+    questionId: context.id,
+    score: grade.score,
+    userId: ownerId,
+  });
 
   return {
     ...grade,
@@ -214,6 +225,64 @@ function storedUserAnswer(context: GradeContext, answer: string): string {
     throw new DocumentError("Choose an option before checking your answer.", 400);
   }
   return `${match.id}. ${match.text}`;
+}
+
+async function persistReviewState(
+  supabase: ReturnType<typeof createServiceRoleClient>,
+  input: { questionId: string; score: number; userId: string },
+): Promise<void> {
+  const now = new Date();
+  const { data: currentRow, error: loadError } = await supabase
+    .from("review_state")
+    .select("ease, interval_days, repetitions, due_at")
+    .eq("question_id", input.questionId)
+    .eq("user_id", input.userId)
+    .maybeSingle();
+
+  if (loadError) {
+    console.error(loadError);
+    throw new DocumentError(GRADE_FAILED_MESSAGE, 500);
+  }
+
+  const current =
+    currentRow === null
+      ? defaultReviewState(now)
+      : reviewStateFromRow(currentRow, now);
+  const next = schedule(current, input.score, now);
+
+  const { error: writeError } = await supabase.from("review_state").upsert(
+    {
+      question_id: input.questionId,
+      user_id: input.userId,
+      ease: next.ease,
+      interval_days: next.intervalDays,
+      repetitions: next.repetitions,
+      due_at: next.dueAt.toISOString(),
+    },
+    { onConflict: "question_id,user_id" },
+  );
+
+  if (writeError) {
+    console.error(writeError);
+    throw new DocumentError(GRADE_FAILED_MESSAGE, 500);
+  }
+}
+
+function reviewStateFromRow(
+  row: {
+    due_at: string | null;
+    ease: number;
+    interval_days: number;
+    repetitions: number;
+  },
+  now: Date,
+): ReviewState {
+  return {
+    dueAt: row.due_at === null ? new Date(now.getTime()) : new Date(row.due_at),
+    ease: Number(row.ease),
+    intervalDays: row.interval_days,
+    repetitions: row.repetitions,
+  };
 }
 
 function toGradeError(error: unknown): DocumentError {

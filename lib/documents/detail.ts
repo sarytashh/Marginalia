@@ -11,6 +11,10 @@ import type {
   DocumentTopic,
   MultipleChoiceOption,
 } from "@/lib/documents/types";
+import {
+  RECENT_MASTERY_LIMIT,
+  topicMastery,
+} from "@/lib/scheduler";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 type QuestionRow = Tables<"questions">;
@@ -130,14 +134,25 @@ function mapTopic(
     return Date.parse(dueAt) <= now;
   }).length;
 
+  const recentScores = questions
+    .flatMap((question) => attemptsByQuestion.get(question.id) ?? [])
+    .map((attempt) => ({
+      at: Date.parse(attempt.created_at),
+      score: attempt.score,
+    }))
+    .sort((left, right) => left.at - right.at)
+    .slice(-RECENT_MASTERY_LIMIT)
+    .map((attempt) => attempt.score);
+  const mastery = topicMastery(recentScores);
+
   return {
     id: topic.id,
     name: topic.name,
     summary: topic.summary,
     questionCount: mappedQuestions.length,
     dueCount,
-    masteryValue: 0,
-    masteryState: "new",
+    masteryValue: mastery.value,
+    masteryState: mastery.state,
     questions: mappedQuestions,
   };
 }

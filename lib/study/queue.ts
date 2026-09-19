@@ -5,6 +5,10 @@ import { excerptPassage } from "@/lib/documents/format";
 import { DocumentError } from "@/lib/documents/http";
 import { getDocumentOwnerId } from "@/lib/documents/owner";
 import { getOwnedDocument } from "@/lib/documents/repository";
+import {
+  RECENT_MASTERY_LIMIT,
+  topicMastery,
+} from "@/lib/scheduler";
 import { isSameLocalDay } from "@/lib/study/format";
 import { publicChoices, parseQuestionOptions } from "@/lib/study/options";
 import { parseStudySearchParams, hasInvalidStudyFilter, type StudySearchParams } from "@/lib/study/params";
@@ -86,7 +90,7 @@ export async function loadStudySession(
           .in("question_id", questionIds),
     supabase
       .from("attempts")
-      .select("question_id, created_at")
+      .select("question_id, created_at, score")
       .eq("user_id", ownerId),
     chunkIds.length === 0
       ? Promise.resolve({
@@ -116,11 +120,36 @@ export async function loadStudySession(
   );
   const attempts = attemptsResult.data ?? [];
   const attemptCountByQuestion = new Map<string, number>();
+  const attemptsByTopic = new Map<
+    string,
+    { at: number; score: number }[]
+  >();
+  const topicIdByQuestion = new Map(
+    questions.map((question) => [question.id, question.topic_id]),
+  );
   for (const attempt of attempts) {
     attemptCountByQuestion.set(
       attempt.question_id,
       (attemptCountByQuestion.get(attempt.question_id) ?? 0) + 1,
     );
+    const topicId = topicIdByQuestion.get(attempt.question_id);
+    if (topicId === undefined) {
+      continue;
+    }
+    const topicAttempts = attemptsByTopic.get(topicId) ?? [];
+    topicAttempts.push({
+      at: Date.parse(attempt.created_at),
+      score: attempt.score,
+    });
+    attemptsByTopic.set(topicId, topicAttempts);
+  }
+  const masteryByTopic = new Map<string, number>();
+  for (const [topicId, topicAttempts] of attemptsByTopic) {
+    topicAttempts.sort((left, right) => left.at - right.at);
+    const recent = topicAttempts
+      .slice(-RECENT_MASTERY_LIMIT)
+      .map((attempt) => attempt.score);
+    masteryByTopic.set(topicId, topicMastery(recent).value);
   }
   const chunksById = new Map((chunksResult.data ?? []).map((chunk) => [chunk.id, chunk]));
 
@@ -130,7 +159,7 @@ export async function loadStudySession(
       id: question.id,
       documentId: question.document_id,
       topicId: question.topic_id,
-      topicMastery: 0,
+      topicMastery: masteryByTopic.get(question.topic_id) ?? 0,
       dueAtMs: dueAt === undefined || dueAt === null ? null : Date.parse(dueAt),
       attemptCount: attemptCountByQuestion.get(question.id) ?? 0,
     };
