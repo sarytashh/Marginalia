@@ -1,7 +1,7 @@
-import type { NextRequest } from "next/server";
-
-import { completeEmailLink } from "@/lib/auth/complete-link";
+import { NextResponse, type NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
-  return completeEmailLink(request);
+  const url = request.nextUrl.clone();
+  url.pathname = "/auth/callback";
+  return NextResponse.redirect(url);
 }

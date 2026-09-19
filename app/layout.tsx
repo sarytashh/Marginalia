@@ -8,6 +8,7 @@ import { GeistSans } from "geist/font/sans";
 import "@fontsource-variable/source-serif-4";
 import "./globals.css";
 
+import { AuthHashCatcher } from "@/components/auth/auth-hash-catcher";
 import { MobileNav } from "@/components/mobile-nav";
 import { SiteHeader } from "@/components/site-header";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -41,6 +42,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           enableSystem
           disableTransitionOnChange
         >
+          <AuthHashCatcher />
           {user ? <SiteHeader email={user.email ?? "Account"} /> : null}
           <main className={user ? "flex-1 pb-14 md:pb-0" : "flex-1"}>{children}</main>
           {user ? <MobileNav /> : null}
