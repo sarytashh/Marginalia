@@ -5,7 +5,8 @@ import { completeStructured } from "@/lib/ai/complete-structured";
 import { extractJsonStringField } from "@/lib/ai/extract-json-field";
 import { GRADING_SYSTEM_PROMPT } from "@/lib/ai/prompts";
 import { streamChatJson } from "@/lib/ai/stream-chat";
-import { gradeModelSchema } from "@/lib/study/grade";
+import { gradeModelSchema, gradeNonAnswer } from "@/lib/study/grade";
+import { isNonAnswer } from "@/lib/study/non-answer";
 import type { ParsedGrade } from "@/lib/study/types";
 
 export async function gradeShortAnswer(input: {
@@ -17,6 +18,12 @@ export async function gradeShortAnswer(input: {
   sourcePassages: readonly { content: string; label: string; pageNumber: number }[];
   userAnswer: string;
 }): Promise<ParsedGrade> {
+  if (isNonAnswer(input.userAnswer)) {
+    const grade = gradeNonAnswer(input.referenceAnswer);
+    input.onExplanation?.(grade.explanation);
+    return grade;
+  }
+
   const passageBlock =
     input.sourcePassages.length === 0
       ? "(No source passages were stored for this question.)"
@@ -73,12 +80,14 @@ ${passageBlock}
 
 Return JSON of the form:
 {
-  "explanation": "two to four sentences grounded in the passages",
-  "whatYouGotRight": ["..."],
-  "whatYouMissed": ["..."],
-  "score": 0.7,
-  "verdict": "partial"
-}`,
+  "explanation": "two to four sentences teaching from the passages",
+  "whatYouGotRight": [],
+  "whatYouMissed": ["the core idea from the passages"],
+  "score": 0,
+  "verdict": "incorrect"
+}
+
+Only raise score above 0 if the student stated a real idea from the passages.`,
   });
 
   return {

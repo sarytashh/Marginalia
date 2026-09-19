@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { gradeModelSchema, gradeMultipleChoice, verdictFromScore } from "@/lib/study/grade";
+import { gradeModelSchema, gradeMultipleChoice, gradeNonAnswer, verdictFromScore } from "@/lib/study/grade";
 
 const options = [
   { id: "A", text: "Relax the edge", correct: false },
@@ -49,6 +49,18 @@ describe("gradeModelSchema", () => {
   });
 });
 
+describe("gradeNonAnswer", () => {
+  it("scores a shrug as incorrect with no credit", () => {
+    const result = gradeNonAnswer(
+      "Dijkstra works when every edge weight is non-negative.",
+    );
+    expect(result.score).toBe(0);
+    expect(result.verdict).toBe("incorrect");
+    expect(result.whatYouGotRight).toEqual([]);
+    expect(result.explanation).toContain("does not state the idea");
+    expect(result.explanation).toContain("non-negative");
+  });
+});
 describe("gradeMultipleChoice", () => {
   const reference =
     "Dijkstra keeps a priority queue of tentative distances so the next vertex is always the closest unsettled one.";
