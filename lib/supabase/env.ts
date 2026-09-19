@@ -26,7 +26,15 @@ function readRequiredEnv(
     );
   }
 
+  if (name === "NEXT_PUBLIC_SUPABASE_URL") {
+    return normalizeSupabaseUrl(value);
+  }
+
   return value;
+}
+
+export function normalizeSupabaseUrl(url: string): string {
+  return url.replace(/\/+$/, "").replace(/\/rest\/v1$/i, "");
 }
 
 export function getSupabasePublicEnv(): SupabasePublicEnv {

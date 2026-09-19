@@ -23,6 +23,13 @@ describe("getSupabasePublicEnv", () => {
     });
   });
 
+  it("strips a copied Data API /rest/v1 suffix so Auth and PostgREST paths stay valid", () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co/rest/v1/";
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
+
+    expect(getSupabasePublicEnv().url).toBe("https://example.supabase.co");
+  });
+
   it("throws a named error when the URL is missing", () => {
     delete process.env.NEXT_PUBLIC_SUPABASE_URL;
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
