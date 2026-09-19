@@ -20,8 +20,9 @@ _Coming soon._
 
 ## How it works
 
-The Library, Study, and Progress routes are still placeholders. The data and model layers are in place:
+The Study and Progress routes are still placeholders. Upload and the data/model layers are in place:
 
+- **Library.** Drop a text-based PDF (20 MB max) on `/`. The file is stored in the private `documents` bucket under the owner’s user id, a `documents` row is created with status `uploaded`, and a background job extracts text **per page** with `unpdf`. Page numbers are kept for later citations. Scanned image PDFs are rejected. The row is polled so the processing steps update in place instead of showing a spinner. Until auth lands, uploads belong to `DEV_USER_ID` if set, otherwise a `local-dev@marginalia.invalid` auth user created via the service-role admin API.
 - **Supabase.** Profiles, documents, 1024-dimension page chunks, topics, grounded questions (`source_chunk_ids`), attempts, and spaced-repetition `review_state`, with Row Level Security and a private `documents` storage bucket. Vector search uses the `match_chunks` RPC.
 - **AI providers.** Chat and embeddings are separate OpenAI-compatible clients, so a chat-only host such as DeepSeek is not asked for vectors. `embedTexts` batches 32 inputs and retries 429/5xx; `completeStructured` validates JSON with Zod and retries once on a schema miss. System prompts live in `lib/ai/prompts/`.
 

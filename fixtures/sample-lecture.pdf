@@ -1,0 +1,58 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 3 /Kids [6 0 R 8 0 R 10 0 R] >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Title (Lecture 06 Graph search) >>
+endobj
+5 0 obj
+<< /Length 129 >>
+stream
+BT /F1 12 Tf 72 720 Td (Lecture 06. A graph is a set of vertices connected by edges. Graphs may be directed or undirected.) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 5 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+7 0 obj
+<< /Length 158 >>
+stream
+BT /F1 12 Tf 72 720 Td (Dijkstra's algorithm finds shortest paths in a weighted graph when every edge weight is non-negative. It uses a priority queue.) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 7 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+9 0 obj
+<< /Length 143 >>
+stream
+BT /F1 12 Tf 72 720 Td (Negative edge weights make Dijkstra incorrect. Bellman-Ford can handle negative weights but not negative cycles.) Tj ET
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 9 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+xref
+0 11
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000128 00000 n 
+0000000198 00000 n 
+0000000252 00000 n 
+0000000432 00000 n 
+0000000558 00000 n 
+0000000767 00000 n 
+0000000893 00000 n 
+0000001087 00000 n 
+trailer
+<< /Size 11 /Root 1 0 R /Info 4 0 R >>
+startxref
+1214
+%%EOF
