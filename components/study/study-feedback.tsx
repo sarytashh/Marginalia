@@ -17,10 +17,7 @@ export function StudyFeedback({ feedback }: StudyFeedbackProps) {
 
   return (
     <section className="border-rule mt-8 border-t pt-6 motion-safe:animate-in motion-safe:fade-in duration-200 ease-out">
-      <h2
-        className="flex items-center gap-2 font-sans text-[14px] font-medium"
-        aria-live="polite"
-      >
+      <h2 className="flex items-center gap-2 font-sans text-[14px] font-medium">
         <VerdictIcon className={`size-4 shrink-0 ${colorClass}`} verdict={feedback.verdict} />
         <span className={colorClass}>{formatVerdict(feedback.verdict)}</span>
         <span className="text-muted-ink font-normal tabular-nums">

@@ -57,8 +57,7 @@ export function DocumentDetailView({ initialDetail }: DocumentDetailViewProps) {
   const questionCount = topics.reduce((sum, topic) => sum + topic.questionCount, 0);
   const canStudy = document.status === "ready" && questionCount > 0;
   const writing = generating || replacing || document.status === "generating";
-  const canGenerate =
-    document.status === "ready" && topics.length > 0 && !writing;
+  const canGenerate = document.status === "ready" && !writing;
   const canReplace =
     (document.status === "ready" || document.status === "failed") &&
     document.chunkCount > 0 &&
@@ -320,10 +319,22 @@ export function DocumentDetailView({ initialDetail }: DocumentDetailViewProps) {
           </section>
         </>
       ) : document.status === "ready" ? (
-        <p className="text-muted-ink mt-16 max-w-[34rem] text-[16px] leading-[1.65]">
-          Marginalia finished reading this file but did not keep any topics. Try
-          generating again, or add a different PDF.
-        </p>
+        <div className="mt-16 max-w-[34rem]">
+          <p className="text-muted-ink text-[16px] leading-[1.65]">
+            Marginalia finished reading this file but did not keep any topics.
+            Replace the set from the existing search index, or add a different PDF.
+          </p>
+          {canReplace ? (
+            <button
+              type="button"
+              disabled={writing}
+              onClick={() => void handleReplace()}
+              className="bg-burgundy text-paper hover:bg-burgundy-hover mt-6 inline-flex min-h-11 items-center rounded-sm px-4 text-[14px] font-medium disabled:opacity-60"
+            >
+              {replacing ? "Replacing topics…" : "Replace topics and questions"}
+            </button>
+          ) : null}
+        </div>
       ) : null}
 
       <DeleteMaterialDialog
