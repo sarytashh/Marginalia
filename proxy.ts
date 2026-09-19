@@ -34,8 +34,22 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
   const isPublic = isPublicAuthPath(pathname);
+  const authLink =
+    searchParams.has("code") || searchParams.has("token_hash");
+
+  if (
+    authLink &&
+    pathname !== "/auth/callback" &&
+    pathname !== "/auth/confirm"
+  ) {
+    const callbackUrl = request.nextUrl.clone();
+    callbackUrl.pathname = "/auth/callback";
+    const redirectResponse = NextResponse.redirect(callbackUrl);
+    copyCookies(supabaseResponse, redirectResponse);
+    return redirectResponse;
+  }
 
   if (user === null && !isPublic) {
     if (isApiPath(pathname)) {

@@ -21,3 +21,20 @@ export function parseOtpType(value: string | null): EmailOtpType | null {
   }
   return value as EmailOtpType;
 }
+
+const VERIFY_ORDER: EmailOtpType[] = [
+  "signup",
+  "magiclink",
+  "email",
+  "invite",
+  "recovery",
+  "email_change",
+];
+
+export function otpTypesToTry(requested: string | null): EmailOtpType[] {
+  const parsed = parseOtpType(requested);
+  if (parsed === null) {
+    return [...VERIFY_ORDER];
+  }
+  return [parsed, ...VERIFY_ORDER.filter((type) => type !== parsed)];
+}
