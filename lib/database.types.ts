@@ -1,4 +1,4 @@
-// Authored to match supabase/migrations/20260917100000_initial_schema.sql.
+// Authored to match supabase/migrations/.
 // Regenerate with `supabase gen types` once a project is linked.
 
 export type Json =
@@ -279,6 +279,14 @@ export type Database = {
           similarity: number;
           token_count: number;
         }[];
+      };
+      progress_dashboard: {
+        Args: {
+          p_now?: string;
+          p_time_zone?: string;
+          p_user_id: string;
+        };
+        Returns: Json;
       };
     };
     Enums: {
