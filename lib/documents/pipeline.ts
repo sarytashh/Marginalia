@@ -166,12 +166,21 @@ export async function prepareDocumentRetry(documentId: string): Promise<{
 
 export async function prepareQuestionGeneration(
   documentId: string,
-  topicId?: string,
+  options: { replace?: boolean; topicId?: string } = {},
 ): Promise<{
   document: LibraryDocument;
   job: () => Promise<void>;
 }> {
   const row = await getOwnedDocument(documentId);
+  const topicId = options.topicId;
+  const replace = options.replace === true;
+
+  if (replace && topicId !== undefined) {
+    throw new DocumentError(
+      "Regenerate the whole material, or add questions to one topic — not both.",
+      400,
+    );
+  }
 
   if (row.status === "generating") {
     throw new DocumentError(
@@ -212,7 +221,7 @@ export async function prepareQuestionGeneration(
 
   return {
     document: await getOwnedLibraryDocument(row.id),
-    job: () => generateStudyMaterial(row.id, row.user_id, { topicId }),
+    job: () => generateStudyMaterial(row.id, row.user_id, { topicId, replace }),
   };
 }
 

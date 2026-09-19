@@ -3,14 +3,23 @@ import "server-only";
 import { completeStructured } from "@/lib/ai/complete-structured";
 import { QUESTION_GENERATION_SYSTEM_PROMPT } from "@/lib/ai/prompts/questions";
 import {
+  isDuplicateQuestionPrompt,
+  questionPromptKey,
+} from "@/lib/generation/dedupe";
+import {
   keepGroundedQuestions,
   labelChunks,
   type GroundedQuestion,
   type LabelableChunk,
 } from "@/lib/generation/ground";
+import {
+  MAX_MULTIPLE_CHOICE_PER_TOPIC,
+  MAX_QUESTIONS_PER_TOPIC,
+  MIN_MULTIPLE_CHOICE_PER_TOPIC,
+  MIN_QUESTIONS_PER_TOPIC,
+  TARGET_QUESTIONS_PER_TOPIC,
+} from "@/lib/generation/limits";
 import { questionGenerationSchema } from "@/lib/generation/schemas";
-
-const QUESTIONS_PER_TOPIC = 4;
 
 export async function generateGroundedQuestions(input: {
   existingPrompts: readonly string[];
@@ -30,25 +39,63 @@ export async function generateGroundedQuestions(input: {
     )
     .join("\n\n");
 
+  const seen = new Set(input.existingPrompts.map((prompt) => questionPromptKey(prompt)));
+  const unique: GroundedQuestion[] = [];
+
+  const first = await requestQuestions({
+    topicName: input.topicName,
+    topicSummary: input.topicSummary,
+    existingPrompts: input.existingPrompts,
+    passageBlock,
+    extraInstruction: null,
+  });
+  appendUniqueQuestions(unique, seen, keepGroundedQuestions(first, labeled));
+
+  if (unique.length >= MIN_QUESTIONS_PER_TOPIC) {
+    return unique.slice(0, MAX_QUESTIONS_PER_TOPIC);
+  }
+
+  const second = await requestQuestions({
+    topicName: input.topicName,
+    topicSummary: input.topicSummary,
+    existingPrompts: [...input.existingPrompts, ...unique.map((question) => question.prompt)],
+    passageBlock,
+    extraInstruction: `You returned ${unique.length} usable question(s). Write ${MIN_QUESTIONS_PER_TOPIC} to ${MAX_QUESTIONS_PER_TOPIC} distinct questions covering different ideas from the passages. Include ${MIN_MULTIPLE_CHOICE_PER_TOPIC} to ${MAX_MULTIPLE_CHOICE_PER_TOPIC} multiple_choice items if the passages support distractors. Do not repeat or rephrase any existing prompt.`,
+  });
+  appendUniqueQuestions(unique, seen, keepGroundedQuestions(second, labeled));
+
+  return unique.slice(0, MAX_QUESTIONS_PER_TOPIC);
+}
+
+async function requestQuestions(input: {
+  existingPrompts: readonly string[];
+  extraInstruction: string | null;
+  passageBlock: string;
+  topicName: string;
+  topicSummary: string;
+}) {
   const existing =
     input.existingPrompts.length === 0
       ? "None yet."
       : input.existingPrompts.map((prompt) => `- ${prompt}`).join("\n");
 
+  const extra =
+    input.extraInstruction === null ? "" : `\n\n${input.extraInstruction}\n`;
+
   const result = await completeStructured({
     schema: questionGenerationSchema,
     system: QUESTION_GENERATION_SYSTEM_PROMPT,
-    temperature: 0.2,
+    temperature: input.extraInstruction === null ? 0.2 : 0.3,
     user: `Topic: ${input.topicName}
 Summary: ${input.topicSummary}
-
-Write ${QUESTIONS_PER_TOPIC} questions if the passages can support them. Prefer short_answer. Include at most one multiple_choice question.
+${extra}
+Write ${TARGET_QUESTIONS_PER_TOPIC} to ${MAX_QUESTIONS_PER_TOPIC} questions if the passages can support them. Include ${MIN_MULTIPLE_CHOICE_PER_TOPIC} to ${MAX_MULTIPLE_CHOICE_PER_TOPIC} multiple_choice questions with distractors taken from these passages. The rest should be short_answer.
 
 sourceChunkIds must use the CHUNK_01-style labels from the passages below. Do not invent labels. Do not duplicate these existing questions:
 ${existing}
 
 Passages:
-${passageBlock}
+${input.passageBlock}
 
 Return JSON of the form:
 {
@@ -65,19 +112,19 @@ Return JSON of the form:
 }`,
   });
 
-  const seenPrompts = new Set(
-    input.existingPrompts.map((prompt) => prompt.trim().toLowerCase()),
-  );
+  return result.questions;
+}
 
-  const grounded = keepGroundedQuestions(result.questions, labeled);
-  const unique: GroundedQuestion[] = [];
-  for (const question of grounded) {
-    const key = question.prompt.trim().toLowerCase();
-    if (key === "" || seenPrompts.has(key)) {
+function appendUniqueQuestions(
+  unique: GroundedQuestion[],
+  seen: Set<string>,
+  questions: readonly GroundedQuestion[],
+): void {
+  for (const question of questions) {
+    if (isDuplicateQuestionPrompt(question.prompt, seen)) {
       continue;
     }
-    seenPrompts.add(key);
+    seen.add(questionPromptKey(question.prompt));
     unique.push(question);
   }
-  return unique;
 }

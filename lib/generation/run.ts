@@ -10,13 +10,21 @@ import {
   TOPICS_FAILED_MESSAGE,
 } from "@/lib/documents/constants";
 import { updateDocument } from "@/lib/documents/repository";
+import {
+  isDuplicateQuestionPrompt,
+  questionPromptKey,
+  topicNameKey,
+} from "@/lib/generation/dedupe";
+import {
+  QUESTION_GENERATION_CONCURRENCY,
+  QUESTION_RETRIEVAL_LIMIT,
+} from "@/lib/generation/limits";
 import { generateGroundedQuestions } from "@/lib/generation/questions";
 import { extractTopicsFromChunks } from "@/lib/generation/topics";
 import { searchChunks } from "@/lib/retrieval";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
-const QUESTION_GENERATION_CONCURRENCY = 2;
-const QUESTION_RETRIEVAL_LIMIT = 8;
+const generationLocks = new Set<string>();
 
 type StoredTopic = {
   id: string;
@@ -38,7 +46,24 @@ type StoredChunk = {
 export async function generateStudyMaterial(
   documentId: string,
   userId: string,
-  options: { topicId?: string } = {},
+  options: { replace?: boolean; topicId?: string } = {},
+): Promise<void> {
+  if (generationLocks.has(documentId)) {
+    return;
+  }
+  generationLocks.add(documentId);
+
+  try {
+    await runStudyMaterialGeneration(documentId, userId, options);
+  } finally {
+    generationLocks.delete(documentId);
+  }
+}
+
+async function runStudyMaterialGeneration(
+  documentId: string,
+  userId: string,
+  options: { replace?: boolean; topicId?: string },
 ): Promise<void> {
   await updateDocument(documentId, {
     status: "generating",
@@ -53,6 +78,10 @@ export async function generateStudyMaterial(
         error_message: SEARCH_INDEX_FAILED_MESSAGE,
       });
       return;
+    }
+
+    if (options.replace === true) {
+      await deleteGeneratedStudyMaterial(documentId);
     }
 
     let topics = await loadTopics(documentId);
@@ -74,16 +103,14 @@ export async function generateStudyMaterial(
     }
 
     const existingQuestions = await loadQuestionPrompts(documentId);
+    const existingPromptTexts = existingQuestions.map((question) => question.prompt);
+    const seenPrompts = new Set(existingPromptTexts.map((prompt) => questionPromptKey(prompt)));
     const limit = pLimit(QUESTION_GENERATION_CONCURRENCY);
 
     await Promise.all(
       selected.map((topic) =>
         limit(async () => {
           try {
-            const existingPrompts = existingQuestions
-              .filter((question) => question.topic_id === topic.id)
-              .map((question) => question.prompt);
-
             const passages = await searchChunks(
               documentId,
               `${topic.name}. ${topic.summary}`,
@@ -98,11 +125,20 @@ export async function generateStudyMaterial(
             const questions = await generateGroundedQuestions({
               topicName: topic.name,
               topicSummary: topic.summary,
-              existingPrompts,
+              existingPrompts: existingPromptTexts,
               passages,
             });
 
-            await insertQuestions(documentId, userId, topic.id, questions);
+            const unique = questions.filter((question) => {
+              if (isDuplicateQuestionPrompt(question.prompt, seenPrompts)) {
+                return false;
+              }
+              seenPrompts.add(questionPromptKey(question.prompt));
+              existingPromptTexts.push(question.prompt);
+              return true;
+            });
+
+            await insertQuestions(documentId, userId, topic.id, unique);
           } catch (error) {
             console.error(error);
           }
@@ -174,8 +210,8 @@ async function collapseDuplicateTopics(documentId: string): Promise<StoredTopic[
   const seen = new Set<string>();
 
   for (const topic of topics) {
-    const key = topic.name.trim().toLowerCase();
-    if (seen.has(key)) {
+    const key = topicNameKey(topic.name);
+    if (key === "" || seen.has(key)) {
       duplicateIds.push(topic.id);
       continue;
     }
@@ -255,6 +291,15 @@ function optionsToJson(
     text: option.text,
     correct: option.correct,
   }));
+}
+
+async function deleteGeneratedStudyMaterial(documentId: string): Promise<void> {
+  const supabase = createServiceRoleClient();
+  const { error } = await supabase.from("topics").delete().eq("document_id", documentId);
+  if (error) {
+    console.error(error);
+    throw new Error(TOPICS_FAILED_MESSAGE);
+  }
 }
 
 async function loadDocumentChunks(documentId: string): Promise<StoredChunk[]> {

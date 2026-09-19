@@ -3,7 +3,7 @@ export type SampleableChunk = {
   pageNumber: number;
 };
 
-export const DEFAULT_TOPIC_SAMPLE_SIZE = 12;
+export const DEFAULT_TOPIC_SAMPLE_SIZE = 16;
 
 export function sampleRepresentativeChunks<T extends SampleableChunk>(
   chunks: readonly T[],
