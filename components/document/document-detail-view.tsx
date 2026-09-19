@@ -24,6 +24,7 @@ import {
   fetchDocumentDetail,
   generateMoreQuestions,
   renameLibraryDocument,
+  replaceStudyMaterial,
   retryLibraryDocument,
 } from "@/lib/documents/client";
 import {
@@ -47,6 +48,7 @@ export function DocumentDetailView({ initialDetail }: DocumentDetailViewProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [replacing, setReplacing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const { document, topics } = detail;
@@ -54,9 +56,13 @@ export function DocumentDetailView({ initialDetail }: DocumentDetailViewProps) {
   const dueCount = topics.reduce((sum, topic) => sum + topic.dueCount, 0);
   const questionCount = topics.reduce((sum, topic) => sum + topic.questionCount, 0);
   const canStudy = document.status === "ready" && questionCount > 0;
-  const writing = generating || document.status === "generating";
+  const writing = generating || replacing || document.status === "generating";
   const canGenerate =
     document.status === "ready" && topics.length > 0 && !writing;
+  const canReplace =
+    (document.status === "ready" || document.status === "failed") &&
+    document.chunkCount > 0 &&
+    !writing;
 
   useEffect(() => {
     if (!processing) {
@@ -94,6 +100,27 @@ export function DocumentDetailView({ initialDetail }: DocumentDetailViewProps) {
       );
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function handleReplace() {
+    setActionError(null);
+    setReplacing(true);
+    try {
+      const updated = await replaceStudyMaterial(document.id);
+      const next = await fetchDocumentDetail(document.id);
+      setDetail({
+        ...next,
+        document: { ...next.document, ...updated },
+      });
+    } catch (error) {
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : "Marginalia could not replace topics and questions.",
+      );
+    } finally {
+      setReplacing(false);
     }
   }
 
@@ -174,6 +201,14 @@ export function DocumentDetailView({ initialDetail }: DocumentDetailViewProps) {
           className="text-burgundy hover:text-burgundy-hover inline-flex min-h-11 items-center text-[14px] font-medium disabled:text-muted-ink disabled:opacity-60"
         >
           {generating ? "Writing questions…" : "Generate more questions"}
+        </button>
+        <button
+          type="button"
+          disabled={!canReplace}
+          onClick={() => void handleReplace()}
+          className="text-burgundy hover:text-burgundy-hover inline-flex min-h-11 items-center text-[14px] font-medium disabled:text-muted-ink disabled:opacity-60"
+        >
+          {replacing ? "Replacing topics…" : "Replace topics and questions"}
         </button>
         <DropdownMenu>
           <DropdownMenuTrigger

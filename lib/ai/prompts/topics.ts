@@ -14,4 +14,4 @@ Each summary is one sentence, grounded in the passages.
 
 Return ${MIN_TOPICS_PER_DOCUMENT} to ${MAX_TOPICS_PER_DOCUMENT} topics, in the order they appear. Aim for about ${TARGET_TOPICS_PER_DOCUMENT} when the passages can support that many. Each name must be distinct. Cover different ideas from different passages — do not cluster everything under one heading.
 Return fewer than ${MIN_TOPICS_PER_DOCUMENT} only if the passages truly cannot support that many distinct ideas. Do not pad by repeating or renaming the same idea.
-If the passages cannot support a topic list, return an empty list.`;
+Return an empty list only if the passages contain no studyable content.`;

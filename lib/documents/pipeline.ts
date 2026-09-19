@@ -189,7 +189,22 @@ export async function prepareQuestionGeneration(
     );
   }
 
-  if (row.status !== "ready") {
+  if (replace) {
+    const counts =
+      (await loadCountsForDocuments([row.id])).get(row.id) ?? EMPTY_DOCUMENT_COUNTS;
+    if (counts.chunkCount === 0) {
+      throw new DocumentError(
+        "Topics can be replaced after the search index is ready.",
+        400,
+      );
+    }
+    if (row.status !== "ready" && row.status !== "failed") {
+      throw new DocumentError(
+        "Topics can be replaced after this material is ready.",
+        400,
+      );
+    }
+  } else if (row.status !== "ready") {
     throw new DocumentError(
       "Questions can be added after this material is ready.",
       400,

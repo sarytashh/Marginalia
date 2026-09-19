@@ -1,3 +1,5 @@
+import { isRetryableNetworkError } from "@/lib/ai/network";
+
 export class AiError extends Error {
   readonly retryable: boolean;
   readonly status: number | undefined;
@@ -59,6 +61,14 @@ export function toAiError(error: unknown): AiError {
     return new AiError("The study model rejected the request. Check the matching AI_*_API_KEY in .env.local.", {
       cause: error,
       retryable: false,
+      status,
+    });
+  }
+
+  if (isRetryableNetworkError(error)) {
+    return new AiError("Marginalia could not reach the study model. Try again.", {
+      cause: error,
+      retryable: true,
       status,
     });
   }

@@ -1,4 +1,5 @@
 import { AiError, getErrorStatus, isRetryableStatus, toAiError } from "@/lib/ai/errors";
+import { isRetryableNetworkError } from "@/lib/ai/network";
 
 export type RetryOptions = {
   baseDelayMs?: number;
@@ -49,7 +50,8 @@ export async function withRetry<T>(
       const retryable =
         error instanceof AiError
           ? error.retryable
-          : status !== undefined && isRetryableStatus(status);
+          : (status !== undefined && isRetryableStatus(status)) ||
+            isRetryableNetworkError(error);
 
       if (!retryable || attempt === maxAttempts) {
         throw toAiError(error);
