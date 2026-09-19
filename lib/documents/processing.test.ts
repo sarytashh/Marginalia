@@ -32,10 +32,19 @@ describe("isDocumentProcessing", () => {
     expect(
       isDocumentProcessing(document({ status: "parsing", pageCount: 12 })),
     ).toBe(false);
+    expect(
+      isDocumentProcessing(document({ status: "generating", pageCount: 12 })),
+    ).toBe(false);
     expect(isDocumentProcessing(document({ status: "ready", pageCount: 12 }))).toBe(
       false,
     );
     expect(isDocumentProcessing(document({ status: "failed" }))).toBe(false);
+  });
+
+  it("is true while embeddings are being written", () => {
+    expect(
+      isDocumentProcessing(document({ status: "embedding", pageCount: 12 })),
+    ).toBe(true);
   });
 });
 
@@ -70,12 +79,38 @@ describe("getProcessingSteps", () => {
     expect(steps[0]?.state).toBe("complete");
     expect(steps[2]?.state).toBe("pending");
   });
+
+  it("marks preparing search index as active while embedding", () => {
+    const steps = getProcessingSteps(
+      document({ status: "embedding", pageCount: 18 }),
+    );
+    expect(steps[1]?.state).toBe("complete");
+    expect(steps[2]?.state).toBe("active");
+    expect(steps[2]?.detail).toMatch(/embedding/);
+    expect(steps[3]?.state).toBe("pending");
+  });
+
+  it("marks the search index complete after embedding, with later steps muted", () => {
+    const steps = getProcessingSteps(
+      document({ status: "generating", pageCount: 18 }),
+    );
+    expect(steps[1]?.state).toBe("complete");
+    expect(steps[2]?.state).toBe("complete");
+    expect(steps[2]?.detail).toBe("Search index is ready.");
+    expect(steps[3]?.state).toBe("pending");
+    expect(steps[4]?.state).toBe("pending");
+    expect(steps[5]?.state).toBe("pending");
+  });
 });
 
 describe("statusLabel", () => {
   it("pairs processing color with a word", () => {
     expect(statusLabel({ status: "parsing", pageCount: null })).toBe("Reading pages");
     expect(statusLabel({ status: "parsing", pageCount: 3 })).toBe("Read");
+    expect(statusLabel({ status: "embedding", pageCount: 3 })).toBe(
+      "Preparing search index",
+    );
+    expect(statusLabel({ status: "generating", pageCount: 3 })).toBe("Indexed");
     expect(statusLabel({ status: "failed", pageCount: 2 })).toBe("Failed");
   });
 });

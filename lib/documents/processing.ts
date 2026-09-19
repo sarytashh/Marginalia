@@ -42,8 +42,7 @@ export function isDocumentProcessing(document: Pick<LibraryDocument, "pageCount"
   return (
     document.status === "uploaded" ||
     document.status === "parsing" ||
-    document.status === "embedding" ||
-    document.status === "generating"
+    document.status === "embedding"
   );
 }
 
@@ -71,7 +70,7 @@ export function getActiveStepId(
     case "embedding":
       return "index";
     case "generating":
-      return "topics";
+      return null;
     case "ready":
     case "failed":
       return null;
@@ -143,6 +142,14 @@ function stepDetail(
     return "Marginalia is reading the text on each page.";
   }
 
+  if (id === "index" && state === "active") {
+    return "Marginalia is embedding each passage so it can find it later.";
+  }
+
+  if (id === "index" && state === "complete") {
+    return "Search index is ready.";
+  }
+
   if (state === "failed") {
     return document.errorMessage;
   }
@@ -161,7 +168,7 @@ export function statusLabel(
     case "embedding":
       return "Preparing search index";
     case "generating":
-      return "Writing questions";
+      return "Indexed";
     case "ready":
       return "Ready to study";
     case "failed":

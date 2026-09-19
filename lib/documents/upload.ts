@@ -3,7 +3,8 @@ import "server-only";
 import { after } from "next/server";
 
 import { DocumentError } from "@/lib/documents/http";
-import { createDocumentRow, parseUploadedDocument } from "@/lib/documents/repository";
+import { processUploadedDocument } from "@/lib/documents/pipeline";
+import { createDocumentRow } from "@/lib/documents/repository";
 import { getDocumentOwnerId } from "@/lib/documents/owner";
 import { pdfStoragePath } from "@/lib/documents/storage-paths";
 import { DOCUMENTS_BUCKET, type LibraryDocument } from "@/lib/documents/types";
@@ -65,7 +66,7 @@ export async function uploadPdfDocument(formData: FormData): Promise<LibraryDocu
     });
 
     after(() =>
-      parseUploadedDocument({
+      processUploadedDocument({
         bytes,
         documentId,
         filename: fileValue.name,

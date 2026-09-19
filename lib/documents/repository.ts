@@ -143,7 +143,7 @@ export async function parseUploadedDocument(input: {
   storagePath: string;
   title: string;
   userId: string;
-}): Promise<void> {
+}): Promise<boolean> {
   await updateDocument(input.documentId, {
     status: "parsing",
     error_message: null,
@@ -158,7 +158,7 @@ export async function parseUploadedDocument(input: {
         page_count: extracted.pageCount,
         error_message: NO_TEXT_PDF_MESSAGE,
       });
-      return;
+      return false;
     }
 
     const supabase = createServiceRoleClient();
@@ -189,53 +189,23 @@ export async function parseUploadedDocument(input: {
         : input.title;
 
     await updateDocument(input.documentId, {
-      status: "parsing",
+      status: "embedding",
       page_count: extracted.pageCount,
       title: nextTitle,
       error_message: null,
     });
+    return true;
   } catch (error) {
     console.error(error);
     await updateDocument(input.documentId, {
       status: "failed",
       error_message: "Marginalia could not read this PDF. Try this step again.",
     });
+    return false;
   }
 }
 
-export async function retryDocumentParse(documentId: string): Promise<LibraryDocument> {
-  const row = await getOwnedDocument(documentId);
-  if (row.status !== "failed") {
-    throw new DocumentError("This document is not waiting for a retry.", 400);
-  }
-
-  const supabase = createServiceRoleClient();
-  const { data, error } = await supabase.storage
-    .from(DOCUMENTS_BUCKET)
-    .download(row.storage_path);
-
-  if (error || data === null) {
-    console.error(error);
-    throw new DocumentError(
-      "Marginalia could not find the original PDF. Upload the file again.",
-      500,
-    );
-  }
-
-  const bytes = new Uint8Array(await data.arrayBuffer());
-  await parseUploadedDocument({
-    bytes,
-    documentId: row.id,
-    filename: row.filename,
-    storagePath: row.storage_path,
-    title: row.title,
-    userId: row.user_id,
-  });
-
-  return toLibraryDocument(await getOwnedDocument(documentId));
-}
-
-async function updateDocument(
+export async function updateDocument(
   documentId: string,
   values: {
     error_message?: string | null;
