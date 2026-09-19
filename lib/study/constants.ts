@@ -4,6 +4,9 @@ export const SESSION_LENGTHS = [5, 10, 20] as const;
 
 export const SESSION_LENGTH_STORAGE_KEY = "marginalia.sessionLength";
 
-export const STUB_ATTEMPT_SCORE = 0;
+export const SCORE_CORRECT = 0.8;
 
-export const STUB_ATTEMPT_FEEDBACK = "Pending grading.";
+export const SCORE_PARTIAL = 0.5;
+
+export const GRADE_FAILED_MESSAGE =
+  "Marginalia could not grade this answer right now. Your response is safe.";

@@ -1,4 +1,5 @@
 import { formatEditorialIndex } from "@/lib/documents/format";
+import type { GradeVerdict, SessionTopicResult } from "@/lib/study/types";
 
 const SMALL_COUNTS = [
   "zero",
@@ -76,6 +77,78 @@ export function formatTodaySummary(attemptCount: number): string {
 export function formatAnswersRecorded(count: number): string {
   const noun = count === 1 ? "answer" : "answers";
   return `${capitalize(countWord(count))} ${noun} recorded.`;
+}
+
+export function formatIdeasHeld(held: number, total: number): string {
+  if (total <= 0) {
+    return "No answers recorded.";
+  }
+  if (total === 1) {
+    return held >= 1 ? "This idea held." : "This idea did not hold.";
+  }
+  if (held <= 0) {
+    return `None of ${countWord(total)} ideas held.`;
+  }
+  return `${capitalize(countWord(held))} of ${countWord(total)} ideas held.`;
+}
+
+export function formatAverageScore(scores: readonly number[]): string | null {
+  if (scores.length === 0) {
+    return null;
+  }
+  const average =
+    scores.reduce((sum, score) => sum + score, 0) / scores.length;
+  return `Average score ${Math.round(average * 100)}%.`;
+}
+
+export function formatVerdict(verdict: GradeVerdict): string {
+  switch (verdict) {
+    case "correct":
+      return "Correct";
+    case "partial":
+      return "Partially correct";
+    case "incorrect":
+      return "Incorrect";
+  }
+}
+
+export function formatSessionNote(
+  topics: readonly SessionTopicResult[],
+): string {
+  const weak = topics.find((topic) => topic.verdict !== "correct");
+  if (weak !== undefined) {
+    return `${weak.name} needs another pass.`;
+  }
+  if (topics.length === 0) {
+    return "Your answers are saved.";
+  }
+  return "These ideas are holding for now.";
+}
+
+export function summarizeSessionTopics(
+  results: readonly SessionTopicResult[],
+): SessionTopicResult[] {
+  const byName = new Map<string, GradeVerdict[]>();
+  for (const result of results) {
+    const current = byName.get(result.name) ?? [];
+    current.push(result.verdict);
+    byName.set(result.name, current);
+  }
+
+  return [...byName.entries()].map(([name, verdicts]) => ({
+    name,
+    verdict: weakestVerdict(verdicts),
+  }));
+}
+
+function weakestVerdict(verdicts: readonly GradeVerdict[]): GradeVerdict {
+  if (verdicts.includes("incorrect")) {
+    return "incorrect";
+  }
+  if (verdicts.includes("partial")) {
+    return "partial";
+  }
+  return "correct";
 }
 
 export function startOfLocalDay(date: Date): number {
