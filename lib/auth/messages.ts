@@ -1,8 +1,17 @@
-export function magicLinkSendError(error: { message: string; status?: number } | string): string {
+export function magicLinkSendError(
+  error: { code?: string; message: string; status?: number } | string,
+): string {
   const message = typeof error === "string" ? error : error.message;
   const status = typeof error === "string" ? undefined : error.status;
+  const code = typeof error === "string" ? undefined : error.code;
 
-  if (status === 429 || /rate|too many/i.test(message)) {
+  if (
+    code === "over_email_send_rate_limit" ||
+    /email rate limit/i.test(message)
+  ) {
+    return "No more sign-in emails can be sent for about an hour. Open the last link we already sent — requesting another will not work yet.";
+  }
+  if (status === 429 || /too many|only request this after/i.test(message)) {
     return "Too many sign-in emails. Wait a minute and try again.";
   }
   if (/invalid.*email|unable to validate/i.test(message)) {

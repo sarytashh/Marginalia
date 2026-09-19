@@ -3,8 +3,18 @@ import { describe, expect, it } from "vitest";
 import { LINK_ERROR_COPY, magicLinkSendError } from "@/lib/auth/messages";
 
 describe("magicLinkSendError", () => {
-  it("names a rate limit without exposing a status code", () => {
-    expect(magicLinkSendError({ message: "rate limit", status: 429 })).toBe(
+  it("names the hourly email quota without exposing a status code", () => {
+    expect(
+      magicLinkSendError({
+        code: "over_email_send_rate_limit",
+        message: "email rate limit exceeded",
+        status: 429,
+      }),
+    ).toContain("about an hour");
+  });
+
+  it("names a short cooldown without exposing a status code", () => {
+    expect(magicLinkSendError({ message: "too many requests", status: 429 })).toBe(
       "Too many sign-in emails. Wait a minute and try again.",
     );
   });
