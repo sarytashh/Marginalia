@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { after } from "next/server";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { DocumentDetailView } from "@/components/document/document-detail-view";
@@ -76,6 +77,20 @@ export default async function DocumentPage({ params }: DocumentPageProps) {
       <p className="text-muted-ink mt-5 max-w-[34rem] text-[16px] leading-[1.65]">
         {errorMessage}
       </p>
+      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <Link
+          href={`/documents/${id}`}
+          className="bg-burgundy text-paper hover:bg-burgundy-hover inline-flex min-h-11 items-center justify-center rounded-sm px-4 text-[14px] font-medium"
+        >
+          Try loading again
+        </Link>
+        <Link
+          href="/"
+          className="text-burgundy hover:text-burgundy-hover inline-flex min-h-11 items-center text-[14px] font-medium"
+        >
+          Return to Library
+        </Link>
+      </div>
     </PageShell>
   );
 }
