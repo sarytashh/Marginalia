@@ -24,7 +24,7 @@ export function ThemeToggle() {
       {/* The icon swaps on the `dark` class rather than on client state, so the
           server and client render the same markup and the masthead never shifts. */}
       <DropdownMenuTrigger
-        className="text-muted-ink hover:bg-selection hover:text-burgundy-hover inline-flex size-8 items-center justify-center rounded-sm transition-colors duration-200 ease-out"
+        className="text-muted-ink hover:bg-selection hover:text-burgundy-hover inline-flex size-11 items-center justify-center rounded-sm transition-colors duration-200 ease-out"
         aria-label="Change theme"
       >
         <Sun className="size-[18px] dark:hidden" aria-hidden />

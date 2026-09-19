@@ -49,7 +49,7 @@ export function ProgressTopicList({ topics }: ProgressTopicListProps) {
                     documentId: topic.documentId,
                     topicId: topic.id,
                   })}
-                  className="text-burgundy hover:text-burgundy-hover text-[14px] font-medium"
+                  className="text-burgundy hover:text-burgundy-hover inline-flex min-h-11 items-center text-[14px] font-medium"
                 >
                   Study
                 </Link>

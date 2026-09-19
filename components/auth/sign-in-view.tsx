@@ -176,25 +176,13 @@ export function SignInView({ initialError, nextPath }: SignInViewProps) {
             </p>
 
             <div className="mt-8 flex flex-col gap-3">
-              {sendError ? (
-                <Button
-                  type="button"
-                  disabled={sending || !isValidEmail(email)}
-                  onClick={() => void sendLink(normalizeEmail(email))}
-                  className="bg-burgundy text-paper hover:bg-burgundy-hover h-11 rounded-sm"
-                >
-                  {sending ? "Sending…" : "Retry"}
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  disabled={sending}
-                  onClick={handleSend}
-                  className="bg-burgundy text-paper hover:bg-burgundy-hover h-11 rounded-sm"
-                >
-                  {sending ? "Sending…" : "Send sign-in link"}
-                </Button>
-              )}
+              <Button
+                type="submit"
+                disabled={sending || (sendError !== null && !isValidEmail(email))}
+                className="bg-burgundy text-paper hover:bg-burgundy-hover h-11 rounded-sm"
+              >
+                {sending ? "Sending…" : sendError ? "Retry" : "Send sign-in link"}
+              </Button>
             </div>
           </form>
         </div>

@@ -2,14 +2,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function LibrarySkeletons() {
   return (
-    <div aria-hidden>
-      <Skeleton className="h-3 w-24 rounded-sm" />
-      <Skeleton className="mt-5 h-12 w-72 max-w-full rounded-sm" />
-      <Skeleton className="mt-4 h-4 w-full max-w-md rounded-sm" />
-      <div className="mt-12 space-y-0">
-        <LibraryRowSkeleton />
-        <LibraryRowSkeleton />
-        <LibraryRowSkeleton />
+    <div>
+      <p className="sr-only" role="status">
+        Loading your library.
+      </p>
+      <div aria-hidden>
+        <Skeleton className="h-3 w-24 rounded-sm" />
+        <Skeleton className="mt-5 h-12 w-72 max-w-full rounded-sm" />
+        <Skeleton className="mt-4 h-4 w-full max-w-md rounded-sm" />
+        <div className="mt-12 space-y-0">
+          <LibraryRowSkeleton />
+          <LibraryRowSkeleton />
+          <LibraryRowSkeleton />
+        </div>
       </div>
     </div>
   );

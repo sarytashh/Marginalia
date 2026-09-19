@@ -9,25 +9,42 @@ import "@fontsource-variable/source-serif-4";
 import "./globals.css";
 
 import { AuthHashCatcher } from "@/components/auth/auth-hash-catcher";
+import { ConnectionNotice } from "@/components/connection-notice";
 import { MobileNav } from "@/components/mobile-nav";
 import { SiteHeader } from "@/components/site-header";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { getSessionUser } from "@/lib/auth/session";
+import { countDueQuestions } from "@/lib/documents/due";
+import { siteDescription, siteName, siteUrl } from "@/lib/site-metadata";
 
 export const metadata: Metadata = {
+  metadataBase: siteUrl(),
+  applicationName: siteName,
   title: {
-    default: "Marginalia",
-    template: "%s · Marginalia",
+    default: siteName,
+    template: `%s · ${siteName}`,
   },
-  description:
-    "An AI study tutor that turns your lecture slides into practice questions, grades your written answers, and schedules what to review next.",
+  description: siteDescription,
+  openGraph: {
+    title: siteName,
+    description: siteDescription,
+    type: "website",
+    locale: "en_US",
+    siteName,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteName,
+    description: siteDescription,
+  },
 };
 
 // Typed explicitly rather than with Next's generated `LayoutProps`, so that
 // `pnpm typecheck` passes on a clean checkout before anything has been built.
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const user = await getSessionUser();
+  const dueCount = user === null ? 0 : await countDueQuestions().catch(() => 0);
 
   return (
     <html
@@ -43,7 +60,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           disableTransitionOnChange
         >
           <AuthHashCatcher />
-          {user ? <SiteHeader email={user.email ?? "Account"} /> : null}
+          {user ? (
+            <SiteHeader dueCount={dueCount} email={user.email ?? "Account"} />
+          ) : null}
+          <ConnectionNotice />
           <main className={user ? "flex-1 pb-14 md:pb-0" : "flex-1"}>{children}</main>
           {user ? <MobileNav /> : null}
           <Toaster />

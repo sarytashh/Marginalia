@@ -6,6 +6,7 @@ import { StudyFeedback } from "@/components/study/study-feedback";
 import { SourceDisclosure } from "@/components/study/source-disclosure";
 import { Textarea } from "@/components/ui/textarea";
 import { GRADE_FAILED_MESSAGE } from "@/lib/study/constants";
+import { formatVerdict } from "@/lib/study/format";
 import type { GradeFeedback, StudyQuestion } from "@/lib/study/types";
 
 const OPTION_LETTERS = ["A", "B", "C", "D"] as const;
@@ -129,8 +130,19 @@ export function StudyQuestionPanel({
       ? "Reading your answer…"
       : "Check answer";
 
+  const liveMessage = liveStatus({
+    emptyHint,
+    error,
+    feedback,
+    phase,
+    statusMessage,
+  });
+
   return (
     <article className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 duration-200 ease-out">
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {liveMessage}
+      </p>
       <p className="label-editorial">{question.topicName}</p>
       <h1 className="font-serif text-ink mt-4 max-w-[40rem] text-[25px] leading-[1.4] font-normal text-pretty md:text-[34px] md:leading-[1.4]">
         {question.prompt}
@@ -248,14 +260,14 @@ export function StudyQuestionPanel({
           </>
         ) : null}
         {firstQuestion && phase === "answering" ? (
-          <p className="text-muted-ink text-[12px] tracking-[0.02em] md:ml-auto">
+          <p className="text-muted-ink hidden text-[12px] tracking-[0.02em] md:ml-auto md:block">
             {question.kind === "multiple_choice"
               ? "⌘/Ctrl Enter checks · 1–4 select · S shows the source · Esc ends"
               : "⌘/Ctrl Enter checks · S shows the source · Esc ends"}
           </p>
         ) : null}
         {phase === "feedback" && firstQuestion ? (
-          <p className="text-muted-ink text-[12px] tracking-[0.02em] md:ml-auto">
+          <p className="text-muted-ink hidden text-[12px] tracking-[0.02em] md:ml-auto md:block">
             Enter or Space for the next question
           </p>
         ) : null}
@@ -290,7 +302,7 @@ function MultipleChoice({
         return (
           <label
             key={option.id}
-            className={`flex min-h-14 cursor-pointer items-start gap-4 border px-4 py-3 duration-200 ease-out ${
+            className={`flex min-h-14 cursor-pointer items-start gap-3 border px-4 py-3 duration-200 ease-out ${
               selected
                 ? "border-rule bg-selection border-l-burgundy border-l-2"
                 : "border-rule bg-paper hover:bg-selection/60"
@@ -304,6 +316,18 @@ function MultipleChoice({
               onChange={() => onSelect(option.id)}
               className="sr-only"
             />
+            <span
+              className={`mt-1 flex size-4 shrink-0 items-center justify-center rounded-sm border ${
+                selected
+                  ? "border-burgundy bg-burgundy"
+                  : "border-rule bg-paper"
+              }`}
+              aria-hidden
+            >
+              {selected ? (
+                <span className="bg-paper block size-1.5 rounded-sm" />
+              ) : null}
+            </span>
             <span
               className={`mt-0.5 w-5 shrink-0 font-sans text-[13px] font-medium ${
                 selected ? "text-burgundy" : "text-muted-ink"
@@ -354,4 +378,32 @@ function isTypingTarget(target: EventTarget | null): boolean {
   }
   const tag = target.tagName;
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+}
+
+function liveStatus({
+  emptyHint,
+  error,
+  feedback,
+  phase,
+  statusMessage,
+}: {
+  emptyHint: string | null;
+  error: string | null;
+  feedback: GradeFeedback | null;
+  phase: QuestionPhase;
+  statusMessage: string;
+}): string {
+  if (emptyHint) {
+    return emptyHint;
+  }
+  if (error) {
+    return GRADE_FAILED_MESSAGE;
+  }
+  if (phase === "submitting") {
+    return statusMessage;
+  }
+  if (phase === "feedback" && feedback !== null) {
+    return `${formatVerdict(feedback.verdict)}. ${Math.round(feedback.score * 100)} percent.`;
+  }
+  return "";
 }
