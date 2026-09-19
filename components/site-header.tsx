@@ -3,10 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { isActiveRoute, navItems } from "@/lib/navigation";
+import { UserMenu } from "@/components/auth/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { isActiveRoute, navItems } from "@/lib/navigation";
 
-export function SiteHeader() {
+type SiteHeaderProps = {
+  email: string;
+};
+
+export function SiteHeader({ email }: SiteHeaderProps) {
   const pathname = usePathname();
 
   return (
@@ -48,8 +53,9 @@ export function SiteHeader() {
           </ul>
         </nav>
 
-        <div className="ml-auto flex items-center">
+        <div className="ml-auto flex items-center gap-3">
           <ThemeToggle />
+          <UserMenu email={email} />
         </div>
       </div>
     </header>

@@ -12,6 +12,7 @@ import { MobileNav } from "@/components/mobile-nav";
 import { SiteHeader } from "@/components/site-header";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { getSessionUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
   title: {
@@ -24,7 +25,9 @@ export const metadata: Metadata = {
 
 // Typed explicitly rather than with Next's generated `LayoutProps`, so that
 // `pnpm typecheck` passes on a clean checkout before anything has been built.
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const user = await getSessionUser();
+
   return (
     <html
       lang="en"
@@ -38,9 +41,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           enableSystem
           disableTransitionOnChange
         >
-          <SiteHeader />
-          <main className="flex-1 pb-14 md:pb-0">{children}</main>
-          <MobileNav />
+          {user ? <SiteHeader email={user.email ?? "Account"} /> : null}
+          <main className={user ? "flex-1 pb-14 md:pb-0" : "flex-1"}>{children}</main>
+          {user ? <MobileNav /> : null}
           <Toaster />
         </ThemeProvider>
       </body>

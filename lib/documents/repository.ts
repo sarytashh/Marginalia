@@ -91,7 +91,7 @@ export async function createDocumentRow(input: {
   if (error || data === null) {
     console.error(error);
     throw new DocumentError(
-      "Marginalia could not save this document. Check that DEV_USER_ID matches a user in Supabase Auth.",
+      "Marginalia could not save this document. Try again.",
       500,
     );
   }

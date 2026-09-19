@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "ai:check": "node --env-file=.env.local --import tsx scripts/ai-check.ts"
+    "ai:check": "node --env-file=.env.local --import tsx scripts/ai-check.ts",
+    "rls:check": "node --env-file=.env.local --import tsx scripts/verify-rls.ts"
   },
   "dependencies": {
     "@fontsource-variable/source-serif-4": "^5.3.0",
