@@ -92,6 +92,21 @@ export function gradeMultipleChoice(input: {
   };
 }
 
+export function gradeNonAnswer(referenceAnswer: string): ParsedGrade {
+  const explanation =
+    referenceAnswer.trim() === ""
+      ? "This answer does not state the idea from the material."
+      : `This answer does not state the idea from the material. ${referenceAnswer.trim()}`;
+
+  return {
+    score: 0,
+    verdict: "incorrect",
+    whatYouGotRight: [],
+    whatYouMissed: ["The core idea from the source passages."],
+    explanation,
+    correctChoiceId: null,
+  };
+}
 export function serializeAttemptFeedback(grade: ParsedGrade): string {
   return JSON.stringify({
     verdict: grade.verdict,
