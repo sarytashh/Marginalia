@@ -3,6 +3,7 @@ import "server-only";
 import pLimit from "p-limit";
 
 import { AiError } from "@/lib/ai/errors";
+import { getChatEnv } from "@/lib/ai/env";
 import type { Json } from "@/lib/database.types";
 import {
   QUESTIONS_FAILED_MESSAGE,
@@ -71,6 +72,12 @@ async function runStudyMaterialGeneration(
   });
 
   try {
+    const chatModel = getChatEnv().chatModel;
+    console.info("generateStudyMaterial", {
+      documentId,
+      chatModel,
+      replace: options.replace === true,
+    });
     const chunks = await loadDocumentChunks(documentId);
     if (chunks.length === 0) {
       await updateDocument(documentId, {
@@ -405,8 +412,8 @@ function generationErrorMessage(error: unknown, topicCount: number): string {
   if (error instanceof Error && error.message === QUESTIONS_FAILED_MESSAGE) {
     return QUESTIONS_FAILED_MESSAGE;
   }
-  if (error instanceof AiError && topicCount === 0) {
-    return TOPICS_FAILED_MESSAGE;
+  if (error instanceof AiError) {
+    return error.message;
   }
   return topicCount === 0 ? TOPICS_FAILED_MESSAGE : QUESTIONS_FAILED_MESSAGE;
 }

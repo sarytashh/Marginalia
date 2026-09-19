@@ -30,9 +30,11 @@ async function completeJsonWithProvider(input: {
   const client = createChatClient();
 
   try {
+    console.info("chat completion", { model: env.chatModel });
     const response = await client.chat.completions.create({
       model: env.chatModel,
       temperature: input.temperature,
+      max_tokens: 8192,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: input.system },

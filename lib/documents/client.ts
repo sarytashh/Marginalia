@@ -79,6 +79,18 @@ export async function generateMoreQuestions(
   return body.document;
 }
 
+export async function replaceStudyMaterial(
+  documentId: string,
+): Promise<LibraryDocument> {
+  const response = await fetch(`/api/documents/${documentId}/generate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ replace: true }),
+  });
+  const body = await readJson<{ document: LibraryDocument }>(response);
+  return body.document;
+}
+
 export function uploadLibraryDocument(input: {
   file: File;
   onProgress: (percent: number) => void;

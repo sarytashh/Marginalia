@@ -66,6 +66,22 @@ describe("withRetry", () => {
     expect(sleep).not.toHaveBeenCalled();
   });
 
+  it("retries a connection error from Ollama, then returns the successful result", async () => {
+    const sleep = vi.fn(async () => undefined);
+    const connection = new Error("Connection error.");
+    connection.cause = new TypeError("fetch failed");
+    const operation = vi
+      .fn()
+      .mockRejectedValueOnce(connection)
+      .mockResolvedValueOnce("ok");
+
+    await expect(
+      withRetry(operation, { sleep, maxAttempts: 4, random: () => 0 }),
+    ).resolves.toBe("ok");
+    expect(operation).toHaveBeenCalledTimes(2);
+    expect(sleep).toHaveBeenCalledTimes(1);
+  });
+
   it("throws AiError after the last retryable failure", async () => {
     const sleep = vi.fn(async () => undefined);
     const operation = vi.fn().mockRejectedValue({ status: 429 });
