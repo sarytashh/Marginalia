@@ -1,8 +1,10 @@
+import { after } from "next/server";
+
 import { handleRouteError, jsonOk } from "@/lib/documents/http";
-import { retryDocumentParse } from "@/lib/documents/repository";
+import { prepareDocumentRetry } from "@/lib/documents/pipeline";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function POST(
   _request: Request,
@@ -10,7 +12,8 @@ export async function POST(
 ) {
   try {
     const { id } = await context.params;
-    const document = await retryDocumentParse(id);
+    const { document, job } = await prepareDocumentRetry(id);
+    after(() => job());
     return jsonOk({ document });
   } catch (error) {
     return handleRouteError(error);

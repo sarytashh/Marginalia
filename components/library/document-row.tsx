@@ -44,11 +44,7 @@ export function DocumentRow({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [retryError, setRetryError] = useState<string | null>(null);
-  const showPipeline =
-    document.status !== "ready" &&
-    (isDocumentProcessing(document) ||
-      document.status === "failed" ||
-      document.status === "parsing");
+  const showPipeline = document.status !== "ready";
 
   const metadata = [
     formatPageCount(document.pageCount),
@@ -127,7 +123,7 @@ export function DocumentRow({
         </div>
       ) : isDocumentProcessing(document) ? (
         <p className="text-muted-ink mt-5 text-[13px]">
-          You can leave this page. Reading continues in the background.
+          You can leave this page. Processing continues in the background.
         </p>
       ) : null}
 
