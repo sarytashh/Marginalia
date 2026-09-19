@@ -11,6 +11,7 @@ export function MobileNav() {
   return (
     <nav
       aria-label="Main"
+      data-app-mobile-nav
       className="border-rule bg-canvas fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <ul className="flex items-stretch">

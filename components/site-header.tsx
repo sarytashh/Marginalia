@@ -10,7 +10,7 @@ export function SiteHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="border-rule bg-canvas/95 supports-[backdrop-filter]:bg-canvas/80 sticky top-0 z-40 border-b backdrop-blur-sm">
+    <header data-app-header className="border-rule bg-canvas/95 supports-[backdrop-filter]:bg-canvas/80 sticky top-0 z-40 border-b backdrop-blur-sm">
       <div className="max-w-app mx-auto flex h-16 w-full items-center gap-8 px-5 md:h-18 md:px-8 lg:px-12">
         <Link
           href="/"
