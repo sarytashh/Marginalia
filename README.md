@@ -33,7 +33,7 @@ _Coming soon._
      Do not use `{{ .ConfirmationURL }}` — that link often goes to `localhost:3000` or `supabase.co`.
 4. Install Ollama, then `ollama pull bge-m3` and `ollama pull qwen2.5:14b`.
 5. `pnpm install` and `pnpm dev` (port **4317**).
-6. Open `http://localhost:4317` on this computer. Enter your email, then open the **new** message on this computer, in the same browser. Hover Confirm: it must start with `http://localhost:4317/auth/callback`. Old emails stay on the old URL.
+6. Open `http://localhost:4317` on this computer. Enter your email **once**, then open the **new** message on this computer, in the same browser. Hover Confirm: it must start with `http://localhost:4317/auth/callback`. Old emails stay on the old URL. Built-in Supabase email allows about **two sign-in messages per hour** — if the app says an hour, open the last email instead of pressing Retry.
 
 `pnpm ai:check` pings chat and embeddings independently and still prints both results if only one side fails. `pnpm rls:check` creates two throwaway Auth users and confirms neither can read the other's documents, chunks, questions, or attempts.
 
