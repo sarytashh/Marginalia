@@ -19,8 +19,8 @@ export async function createServerSupabaseClient() {
             cookieStore.set(name, value, options);
           }
         } catch {
-          // Server Components cannot write cookies. Auth middleware will
-          // persist refreshed sessions once it exists.
+          // Server Components cannot write cookies. proxy.ts persists
+          // refreshed sessions on the response.
         }
       },
     },

@@ -191,11 +191,14 @@
   }
 
   body:has([data-study-frame]) [data-app-header],
-  body:has([data-study-frame]) [data-app-mobile-nav] {
+  body:has([data-study-frame]) [data-app-mobile-nav],
+  body:has([data-auth-frame]) [data-app-header],
+  body:has([data-auth-frame]) [data-app-mobile-nav] {
     display: none;
   }
 
-  body:has([data-study-frame]) main {
+  body:has([data-study-frame]) main,
+  body:has([data-auth-frame]) main {
     padding-bottom: 0;
   }
 
