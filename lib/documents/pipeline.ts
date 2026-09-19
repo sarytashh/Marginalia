@@ -5,17 +5,24 @@ import { embedTexts } from "@/lib/ai/embed";
 import { AiError } from "@/lib/ai/errors";
 import { chunkPages, type SourceChunk } from "@/lib/chunker";
 import { SEARCH_INDEX_FAILED_MESSAGE } from "@/lib/documents/constants";
+import { loadCountsForDocuments } from "@/lib/documents/counts";
 import { DocumentError } from "@/lib/documents/http";
 import { toLibraryDocument } from "@/lib/documents/map";
 import { getFailedStepId } from "@/lib/documents/processing";
 import {
   getOwnedDocument,
+  getOwnedLibraryDocument,
   parseUploadedDocument,
   updateDocument,
 } from "@/lib/documents/repository";
 import { loadStoredPages } from "@/lib/documents/stored-pages";
-import { DOCUMENTS_BUCKET, type LibraryDocument } from "@/lib/documents/types";
+import {
+  DOCUMENTS_BUCKET,
+  EMPTY_DOCUMENT_COUNTS,
+  type LibraryDocument,
+} from "@/lib/documents/types";
 import { toPgVector } from "@/lib/documents/vector";
+import { generateStudyMaterial } from "@/lib/generation/run";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 const CHUNK_INSERT_BATCH_SIZE = 40;
@@ -72,6 +79,7 @@ export async function embedStoredPages(documentId: string, userId: string): Prom
       status: "generating",
       error_message: null,
     });
+    await generateStudyMaterial(documentId, userId);
   } catch (error) {
     console.error(error);
     await updateDocument(documentId, {
@@ -90,7 +98,9 @@ export async function prepareDocumentRetry(documentId: string): Promise<{
     throw new DocumentError("This document is not waiting for a retry.", 400);
   }
 
-  const failedStep = getFailedStepId(toLibraryDocument(row));
+  const counts =
+    (await loadCountsForDocuments([row.id])).get(row.id) ?? EMPTY_DOCUMENT_COUNTS;
+  const failedStep = getFailedStepId(toLibraryDocument(row, counts));
 
   if (failedStep === "reading") {
     const bytes = await downloadPdfBytes(row.storage_path);
@@ -99,7 +109,7 @@ export async function prepareDocumentRetry(documentId: string): Promise<{
       error_message: null,
     });
     return {
-      document: toLibraryDocument(await getOwnedDocument(row.id)),
+      document: await getOwnedLibraryDocument(row.id),
       job: () =>
         processUploadedDocument({
           bytes,
@@ -120,7 +130,7 @@ export async function prepareDocumentRetry(documentId: string): Promise<{
       error_message: null,
     });
     return {
-      document: toLibraryDocument(await getOwnedDocument(row.id)),
+      document: await getOwnedLibraryDocument(row.id),
       job: () =>
         processUploadedDocument({
           bytes,
@@ -133,13 +143,76 @@ export async function prepareDocumentRetry(documentId: string): Promise<{
     };
   }
 
+  if (failedStep === "topics" || failedStep === "questions") {
+    await updateDocument(row.id, {
+      status: "generating",
+      error_message: null,
+    });
+    return {
+      document: await getOwnedLibraryDocument(row.id),
+      job: () => generateStudyMaterial(row.id, row.user_id),
+    };
+  }
+
   await updateDocument(row.id, {
     status: "embedding",
     error_message: null,
   });
   return {
-    document: toLibraryDocument(await getOwnedDocument(row.id)),
+    document: await getOwnedLibraryDocument(row.id),
     job: () => embedStoredPages(row.id, row.user_id),
+  };
+}
+
+export async function prepareQuestionGeneration(
+  documentId: string,
+  topicId?: string,
+): Promise<{
+  document: LibraryDocument;
+  job: () => Promise<void>;
+}> {
+  const row = await getOwnedDocument(documentId);
+
+  if (row.status === "generating") {
+    throw new DocumentError(
+      "Marginalia is already writing questions for this material.",
+      409,
+    );
+  }
+
+  if (row.status !== "ready") {
+    throw new DocumentError(
+      "Questions can be added after this material is ready.",
+      400,
+    );
+  }
+
+  if (topicId !== undefined) {
+    const supabase = createServiceRoleClient();
+    const { data, error } = await supabase
+      .from("topics")
+      .select("id")
+      .eq("id", topicId)
+      .eq("document_id", documentId)
+      .maybeSingle();
+
+    if (error) {
+      console.error(error);
+      throw new DocumentError("Marginalia could not load that topic. Try again.", 500);
+    }
+    if (data === null) {
+      throw new DocumentError("That topic is not in this material.", 404);
+    }
+  }
+
+  await updateDocument(row.id, {
+    status: "generating",
+    error_message: null,
+  });
+
+  return {
+    document: await getOwnedLibraryDocument(row.id),
+    job: () => generateStudyMaterial(row.id, row.user_id, { topicId }),
   };
 }
 

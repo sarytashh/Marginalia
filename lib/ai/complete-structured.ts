@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createChatClient } from "@/lib/ai/client";
 import { getChatEnv } from "@/lib/ai/env";
 import { AiError, toAiError } from "@/lib/ai/errors";
+import { parseModelJson } from "@/lib/ai/parse-json";
 import { JSON_OUTPUT_SYSTEM_PROMPT } from "@/lib/ai/prompts";
 import { withRetry } from "@/lib/ai/retry";
 
@@ -54,7 +55,7 @@ async function completeJsonWithProvider(input: {
 
 function parseJsonObject(text: string): unknown {
   try {
-    return JSON.parse(text) as unknown;
+    return parseModelJson(text);
   } catch (error) {
     const detail = error instanceof Error ? error.message : "Invalid JSON";
     throw new AiError(`The study model returned JSON that could not be parsed: ${detail}`, {
@@ -102,6 +103,13 @@ Return only JSON that matches the required schema.`;
   if (secondParsed.ok) {
     return secondParsed.data;
   }
+
+  console.error("completeStructured schema miss", {
+    firstIssue: firstParsed.issue,
+    secondIssue: secondParsed.issue,
+    firstText: firstText.slice(0, 1500),
+    secondText: secondText.slice(0, 1500),
+  });
 
   throw new AiError(
     "The study model returned a response that did not match the expected shape. Try again.",

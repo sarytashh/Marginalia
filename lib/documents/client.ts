@@ -1,4 +1,4 @@
-import type { LibraryDocument } from "@/lib/documents/types";
+import type { DocumentDetail, LibraryDocument } from "@/lib/documents/types";
 
 type ErrorBody = {
   error?: unknown;
@@ -54,6 +54,26 @@ export async function retryLibraryDocument(
 ): Promise<LibraryDocument> {
   const response = await fetch(`/api/documents/${documentId}/retry`, {
     method: "POST",
+  });
+  const body = await readJson<{ document: LibraryDocument }>(response);
+  return body.document;
+}
+
+export async function fetchDocumentDetail(
+  documentId: string,
+): Promise<DocumentDetail> {
+  const response = await fetch(`/api/documents/${documentId}`, { cache: "no-store" });
+  return readJson<DocumentDetail>(response);
+}
+
+export async function generateMoreQuestions(
+  documentId: string,
+  topicId?: string,
+): Promise<LibraryDocument> {
+  const response = await fetch(`/api/documents/${documentId}/generate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(topicId === undefined ? {} : { topicId }),
   });
   const body = await readJson<{ document: LibraryDocument }>(response);
   return body.document;

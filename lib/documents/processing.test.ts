@@ -18,6 +18,9 @@ function document(
     status: "uploaded",
     errorMessage: null,
     createdAt: "2026-09-19T10:00:00.000Z",
+    chunkCount: 0,
+    topicCount: 0,
+    questionCount: 0,
     ...overrides,
   };
 }
@@ -32,18 +35,18 @@ describe("isDocumentProcessing", () => {
     expect(
       isDocumentProcessing(document({ status: "parsing", pageCount: 12 })),
     ).toBe(false);
-    expect(
-      isDocumentProcessing(document({ status: "generating", pageCount: 12 })),
-    ).toBe(false);
     expect(isDocumentProcessing(document({ status: "ready", pageCount: 12 }))).toBe(
       false,
     );
     expect(isDocumentProcessing(document({ status: "failed" }))).toBe(false);
   });
 
-  it("is true while embeddings are being written", () => {
+  it("is true while embeddings or questions are being written", () => {
     expect(
       isDocumentProcessing(document({ status: "embedding", pageCount: 12 })),
+    ).toBe(true);
+    expect(
+      isDocumentProcessing(document({ status: "generating", pageCount: 12 })),
     ).toBe(true);
   });
 });
@@ -90,27 +93,69 @@ describe("getProcessingSteps", () => {
     expect(steps[3]?.state).toBe("pending");
   });
 
-  it("marks the search index complete after embedding, with later steps muted", () => {
+  it("marks finding topics as active after embedding, before any topics exist", () => {
     const steps = getProcessingSteps(
-      document({ status: "generating", pageCount: 18 }),
+      document({ status: "generating", pageCount: 18, chunkCount: 6 }),
     );
-    expect(steps[1]?.state).toBe("complete");
     expect(steps[2]?.state).toBe("complete");
     expect(steps[2]?.detail).toBe("Search index is ready.");
-    expect(steps[3]?.state).toBe("pending");
+    expect(steps[3]?.state).toBe("active");
     expect(steps[4]?.state).toBe("pending");
     expect(steps[5]?.state).toBe("pending");
+  });
+
+  it("marks writing questions as active once topics have been stored", () => {
+    const steps = getProcessingSteps(
+      document({
+        status: "generating",
+        pageCount: 18,
+        chunkCount: 6,
+        topicCount: 3,
+      }),
+    );
+    expect(steps[3]?.state).toBe("complete");
+    expect(steps[3]?.detail).toBe("Found 3 topics.");
+    expect(steps[4]?.state).toBe("active");
+    expect(steps[4]?.detail).toMatch(/retrieved passages/);
+  });
+
+  it("marks the topics step failed when generation stops before any topics exist", () => {
+    const steps = getProcessingSteps(
+      document({
+        status: "failed",
+        pageCount: 18,
+        chunkCount: 6,
+        errorMessage:
+          "Marginalia could not find topics in this document. Try this step again.",
+      }),
+    );
+    expect(steps[2]?.state).toBe("complete");
+    expect(steps[3]?.state).toBe("failed");
+    expect(steps[4]?.state).toBe("pending");
   });
 });
 
 describe("statusLabel", () => {
   it("pairs processing color with a word", () => {
-    expect(statusLabel({ status: "parsing", pageCount: null })).toBe("Reading pages");
-    expect(statusLabel({ status: "parsing", pageCount: 3 })).toBe("Read");
-    expect(statusLabel({ status: "embedding", pageCount: 3 })).toBe(
-      "Preparing search index",
+    expect(statusLabel({ ...document({ status: "parsing", pageCount: null }) })).toBe(
+      "Reading pages",
     );
-    expect(statusLabel({ status: "generating", pageCount: 3 })).toBe("Indexed");
-    expect(statusLabel({ status: "failed", pageCount: 2 })).toBe("Failed");
+    expect(statusLabel({ ...document({ status: "parsing", pageCount: 3 }) })).toBe(
+      "Read",
+    );
+    expect(
+      statusLabel({ ...document({ status: "embedding", pageCount: 3 }) }),
+    ).toBe("Preparing search index");
+    expect(
+      statusLabel({ ...document({ status: "generating", pageCount: 3 }) }),
+    ).toBe("Finding topics");
+    expect(
+      statusLabel({
+        ...document({ status: "generating", pageCount: 3, topicCount: 2 }),
+      }),
+    ).toBe("Writing questions");
+    expect(statusLabel({ ...document({ status: "failed", pageCount: 2 }) })).toBe(
+      "Failed",
+    );
   });
 });
