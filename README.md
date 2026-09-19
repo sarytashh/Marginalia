@@ -1,18 +1,43 @@
 # Marginalia
 
-An AI study tutor that turns your lecture slides into practice questions grounded in your own material, grades your written answers, and schedules what you should review next.
+An AI study tutor that turns your lecture slides into practice questions grounded in the uploaded material, grades your written answers, and schedules what you should review next.
 
-## Screenshots
+[![CI](https://github.com/sarytashh/Marginalia/actions/workflows/ci.yml/badge.svg)](https://github.com/sarytashh/Marginalia/actions/workflows/ci.yml)
 
-_Coming soon._
+![Study session with in-place grading feedback](docs/screenshots/study-feedback.png)
+
+_Study — one question, a written answer, and feedback that stays beside the source passage. Capture this screen after submitting an answer so the verdict and explanation are visible._
 
 ## Live demo
 
-_Coming soon._
+A public URL is not up yet. Local development runs at [http://localhost:4317](http://localhost:4317).
+
+## The problem
+
+Lecture PDFs are easy to reread and hard to practice from. Generic quiz apps ask whatever the model already knows. Marginalia only writes and grades questions from retrieved passages of *your* slides, then uses spaced repetition so weak topics come back first.
 
 ## Stack
 
-_Coming soon._
+- **Next.js** App Router, TypeScript (strict), Tailwind CSS, shadcn/ui
+- **Supabase** — Postgres, pgvector, Auth (email magic links), private Storage, Row Level Security
+- **OpenAI-compatible AI clients** — chat and embeddings are separate env-configured endpoints. This repo is run against local Ollama (`qwen2.5:14b` for chat, `bge-m3` for embeddings)
+- **Vitest** for pure logic: chunking, scheduling, grounding checks, retries
+
+## How it works
+
+1. **Upload.** A text-based PDF (20 MB max) is stored under your user id. Scanned image PDFs are rejected.
+2. **Parse and chunk.** `unpdf` extracts text per page. Pages are split to about 800 tokens with about 100 tokens of overlap, on paragraph and sentence boundaries.
+3. **Embed and retrieve.** Chunks are embedded and stored with page numbers. `searchChunks` embeds a query and calls the `match_chunks` RPC.
+4. **Topics and questions.** The chat model proposes 5–12 topics from sampled passages. For each topic, nearby chunks are retrieved and the model writes 4–8 questions **using only those passages**. Each question stores `source_chunk_ids`. Unknown chunk ids and near-duplicates are dropped.
+5. **Study.** `/study` presents one due question at a time, weakest topics first. Short answers are graded against the question, reference answer, and source chunks. Multiple choice is scored locally. Failed grading never clears the typed answer.
+6. **Schedule.** A trimmed SM-2 `schedule` function in `lib/scheduler.ts` updates `review_state` after every attempt. `topicMastery` is a recency-weighted average and drives ordering.
+7. **Progress.** `/progress` is an editorial report: weakest topics first, a 12-week activity heatmap, score over time, and streak copy that does not treat a miss as failure.
+
+## An interesting decision
+
+The grounding rule is the product. The model is not allowed to draw on general knowledge when writing questions or grading. System prompts live in `lib/ai/prompts/` so they can be reviewed in git. Raw model JSON never reaches the database: `completeStructured` validates every response with Zod and retries once on a schema miss. A question that cites a chunk id that was not retrieved is discarded before insert.
+
+The same idea shows up in the provider layer. Chat and embeddings are separate OpenAI-compatible clients configured only through environment variables, so a chat-only host is never asked for vectors, and the app can move between Ollama, SiliconFlow, or another compatible endpoint without code changes.
 
 ## Setup
 
@@ -26,44 +51,50 @@ _Coming soon._
      - `http://127.0.0.1:4317/auth/callback`
      - `http://127.0.0.1:4317/auth/confirm`
    - **Authentication → Providers → Email:** enable Email. Leave magic links on.
-   - **Authentication → Email Templates → Confirm signup:** set the button/link `href` to  
+   - **Authentication → Email Templates → Confirm signup:** set the button/link `href` to
      `{{ .SiteURL }}?token_hash={{ .TokenHash }}&type=signup`
-   - **Authentication → Email Templates → Magic Link:**  
+   - **Authentication → Email Templates → Magic Link:**
      `{{ .SiteURL }}?token_hash={{ .TokenHash }}&type=magiclink`
      Do not use `{{ .ConfirmationURL }}` — that link often goes to `localhost:3000` or `supabase.co`.
 4. Install Ollama, then `ollama pull bge-m3` and `ollama pull qwen2.5:14b`.
 5. `pnpm install` and `pnpm dev` (port **4317**).
 6. Open `http://localhost:4317` on this computer. Enter your email **once**, then open the **new** message on this computer, in the same browser. Hover Confirm: it must start with `http://localhost:4317/auth/callback`. Old emails stay on the old URL. Built-in Supabase email allows about **two sign-in messages per hour** — if the app says an hour, open the last email instead of pressing Retry.
 
-`pnpm ai:check` pings chat and embeddings independently and still prints both results if only one side fails. `pnpm rls:check` creates two throwaway Auth users and confirms neither can read the other's documents, chunks, questions, or attempts.
+`pnpm ai:check` pings chat and embeddings independently and still prints both results if only one side fails. `pnpm rls:check` creates two throwaway Auth users and confirms neither can read the other's documents, chunks, questions, or attempts. `pnpm typecheck`, `pnpm lint`, and `pnpm test` are what CI runs.
 
 Environment variables (see `.env.example`; put real values only in `.env.local`):
 
-- Supabase: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- Chat: `AI_CHAT_BASE_URL`, `AI_CHAT_API_KEY`, `AI_CHAT_MODEL`
-- Embeddings: `AI_EMBEDDING_BASE_URL`, `AI_EMBEDDING_API_KEY`, `AI_EMBEDDING_MODEL`, `AI_EMBEDDING_DIMENSIONS`
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only service role key |
+| `AI_CHAT_BASE_URL` | OpenAI-compatible chat endpoint |
+| `AI_CHAT_API_KEY` | Chat API key (any non-empty dummy such as `ollama` for local Ollama) |
+| `AI_CHAT_MODEL` | Chat model name |
+| `AI_EMBEDDING_BASE_URL` | OpenAI-compatible embeddings endpoint |
+| `AI_EMBEDDING_API_KEY` | Embeddings API key |
+| `AI_EMBEDDING_MODEL` | Embedding model name |
+| `AI_EMBEDDING_DIMENSIONS` | Vector size (1024 for `bge-m3`) |
+| `NEXT_PUBLIC_SITE_URL` | Optional. Canonical origin for Open Graph links; defaults to `http://localhost:4317` |
 
-This repo is currently run against local Ollama, not a cloud embedding host:
+This repo is currently run against local Ollama:
 
-- Chat: `qwen2.5:14b` (`http://127.0.0.1:11434/v1`)
-- Embeddings: `bge-m3` (`http://127.0.0.1:11434/v1`, 1024 dimensions). Set both `AI_*_API_KEY` values to any non-empty dummy such as `ollama`.
+- Chat: `qwen2.5:14b` at `http://127.0.0.1:11434/v1`
+- Embeddings: `bge-m3` at `http://127.0.0.1:11434/v1`, 1024 dimensions
 
-## How it works
+## Screenshots
 
-Upload, parsing, chunking, retrieval, topic extraction, grounded question generation, the study session, AI grading, spaced-repetition scheduling, the progress dashboard, and email magic-link auth are in place.
+Export these three screens at **1440px wide** (and `/study` also at **375px** if you can). Save them under `docs/screenshots/` with the filenames below, then the images in this README will render.
 
-- **Auth.** `/sign-in` emails a magic link through Supabase Auth. `proxy.ts` refreshes the session cookie and sends unsigned visitors to sign-in; `/auth/callback` exchanges the link for a session. A Postgres trigger inserts a `profiles` row on signup. The header menu shows the signed-in email, theme, and Sign out. Documents, attempts, and review state belong to `auth.uid()` — there is no shared placeholder user.
-- **Library.** Drop a text-based PDF (20 MB max) on `/`. The file is stored in the private `documents` bucket under your user id, a `documents` row is created with status `uploaded`, and a background job extracts text **per page** with `unpdf`, then chunks and embeds it. Page numbers stay on every chunk for later citations. Scanned image PDFs are rejected. After embedding, Marginalia extracts topics and writes questions. The row is polled so the processing steps update in place instead of showing a spinner. Use a small PDF (the `fixtures/sample-lecture.pdf` fixture, a few pages) on a local embedding box — skip huge textbooks. Materials uploaded before auth landed stay on the old local-dev owner and will not appear under a new account.
-- **Chunking and retrieval.** Pages are split to about 800 tokens with about 100 tokens of overlap, on paragraph and sentence boundaries, using `js-tiktoken` (`cl100k_base`). Chunks are embedded with `embedTexts` and stored on `chunks.embedding`. `searchChunks` embeds a query and calls the `match_chunks` RPC. A dev-only page at `/debug/search` shows retrieved passages and scores.
-- **Topics and questions.** After the search index is ready, Marginalia samples passages across the document and asks the chat model for **5–12** specific topics (name + one-sentence summary). For each topic it retrieves the nearest chunks, then asks the model to write **4–8** questions using **only those passages**, mixed short answer with some multiple choice. Duplicate or near-duplicate prompts are dropped. The system prompt forbids using general knowledge; questions that cite unknown chunks are dropped before insert. Each question stores `source_chunk_ids` and a `review_state` row due immediately. Generation runs across topics with a concurrency limit of 2. To replace an existing topic/question set without re-embedding, `POST /api/documents/[id]/generate` with `{"replace":true}`.
-- **Document detail.** `/documents/[id]` is the course-reader spread: title and metadata, the processing pipeline while work is in progress, a numbered topic index, and an expandable question archive. Each question shows its type, difficulty, source page, reference answer, and a passage excerpt. Primary action starts study for that material; Generate more writes another grounded batch; **Replace topics and questions** deletes the current set and extracts again from the existing search index (no re-embed).
-- **Study.** `/study` presents one due question at a time (default 10), weakest topics first, then never-seen items. `/study?document=<id>` restricts to one document; topic and question query params narrow further. Short answers use a textarea; multiple choice uses A–D rows. A source disclosure expands the cited passage without affecting grading. Keyboard: `⌘/Ctrl Enter` submits, `1–4` select options, `S` toggles the source, `Enter`/`Space` advances after feedback, `Esc` ends. Submit grades the answer in place: the question stays on screen, the verdict uses both a color and a word, and the explanation streams as the chat model writes it. Short answers are graded against the question, reference answer, and source chunks only — wording can differ; English or Chinese is fine; general knowledge is not used. Multiple choice is scored locally, then the same feedback layout explains the correct option. Attempts are stored with score and feedback. If grading fails, the typed answer stays and Retry is available — local Ollama can take a while; a hung request is retried, a silent drop is not. Nothing-due offers study ahead; the closing screen lists how many ideas held and which topics need another pass.
-- **Review schedule.** Each question has a `review_state` row (ease, interval, repetitions, due time). After every attempt, a trimmed SM-2 `schedule` function in `lib/scheduler.ts` updates that row: score ≥ 0.8 grows the interval (1 day, then 3, then previous × ease, cap 180 days); 0.5–0.8 comes back in a day; below 0.5 resets to due now. Ease stays between 1.3 and 3.0, and due times get a few percent of jitter so same-interval cards do not clump. `topicMastery` is a recency-weighted average of recent scores (`new` / `learning` / `shaky` / `solid`) and drives weakest-topic ordering in study.
-- **Progress.** `/progress` is an editorial report, not a dashboard of cards. Topics from every document are listed weakest first, each with its document, a mastery line, a state label (`New` / `Learning` / `Needs review` / `Solid`), question count, due count, and a Study action. A 12-week activity heatmap uses burgundy intensity plus a text summary; a restyled Recharts line shows daily average score; streak copy names the current run without treating a miss as failure. Aggregates prefer the `progress_dashboard` Postgres function; if that migration has not been applied, the page loads the same totals from tables instead of failing. Empty copy is the study map invitation; loading uses skeletons that match the layout.
-- **Supabase.** Profiles (created on signup), documents, 1024-dimension page chunks, topics, grounded questions (`source_chunk_ids`), attempts, and spaced-repetition `review_state`, with Row Level Security and a private `documents` storage bucket. Vector search uses the `match_chunks` RPC. Progress totals use `progress_dashboard`.
-- **AI providers.** Chat and embeddings are separate OpenAI-compatible clients, so a chat-only host is not asked for vectors. `embedTexts` batches 32 inputs and retries 429/5xx; `completeStructured` validates JSON with Zod and retries once on a schema miss. System prompts live in `lib/ai/prompts/`.
+1. **`docs/screenshots/study-feedback.png`** — `/study` after grading. The serif question stays on screen; the verdict word and explanation sit underneath; the source excerpt is visible. This is the hero image at the top.
+2. **`docs/screenshots/library.png`** — `/` with at least one document in the list. The editorial heading (due questions or “caught up”), the materials rows, and the ivory/ink/burgundy palette should be obvious. No generic card grid.
+3. **`docs/screenshots/progress.png`** — `/progress` after a few attempts. Weakest topics first, mastery line with a text state, heatmap, and score chart on the canvas — not boxed dashboard cards.
+
+![Library](docs/screenshots/library.png)
+
+![Progress](docs/screenshots/progress.png)
 
 ---
 
-Planning material for this project lives in [docs/plan.md](docs/plan.md) (the build guide) and
-[docs/design.md](docs/design.md) (the design specification).
+Planning material lives in [docs/plan.md](docs/plan.md) and [docs/design.md](docs/design.md).
