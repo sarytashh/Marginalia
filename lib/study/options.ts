@@ -37,3 +37,32 @@ export function publicChoices(
   }
   return options.map((option) => ({ id: option.id, text: option.text }));
 }
+
+export function matchQuestionChoice(
+  options: readonly MultipleChoiceOption[],
+  answer: string,
+): MultipleChoiceOption | null {
+  const trimmed = answer.trim();
+  if (trimmed === "") {
+    return null;
+  }
+
+  const exact = options.find(
+    (option) =>
+      option.id === trimmed ||
+      option.text === trimmed ||
+      `${option.id}. ${option.text}` === trimmed,
+  );
+  if (exact !== undefined) {
+    return exact;
+  }
+
+  const lowered = trimmed.toLowerCase();
+  return (
+    options.find(
+      (option) =>
+        option.id.toLowerCase() === lowered ||
+        option.text.toLowerCase() === lowered,
+    ) ?? null
+  );
+}

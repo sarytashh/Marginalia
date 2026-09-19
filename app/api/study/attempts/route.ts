@@ -1,7 +1,11 @@
-import { handleRouteError, jsonError, jsonOk } from "@/lib/documents/http";
-import { recordStubAttempt } from "@/lib/study/attempts";
+import { DocumentError, handleRouteError, jsonError } from "@/lib/documents/http";
+import { gradeAndRecordAttempt } from "@/lib/study/attempts";
+import { GRADE_FAILED_MESSAGE } from "@/lib/study/constants";
+import { encodeGradeStreamEvent } from "@/lib/study/events";
+import type { GradeStreamEvent } from "@/lib/study/events";
 
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   try {
@@ -22,12 +26,58 @@ export async function POST(request: Request) {
       return jsonError("Write a few words before checking your answer.", 400);
     }
 
-    const attempt = await recordStubAttempt({
-      questionId: questionId.trim(),
-      userAnswer,
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        const send = (event: GradeStreamEvent) => {
+          controller.enqueue(encoder.encode(encodeGradeStreamEvent(event)));
+        };
+
+        try {
+          send({ type: "status", message: "Reading your answer…" });
+          const feedback = await gradeAndRecordAttempt(
+            {
+              questionId: questionId.trim(),
+              userAnswer,
+            },
+            {
+              onExplanation: (text) => {
+                send({ type: "explanation", text });
+              },
+              onStatus: (message) => {
+                send({ type: "status", message });
+              },
+            },
+          );
+          send({ type: "result", feedback });
+        } catch (error) {
+          console.error(error);
+          send({
+            type: "error",
+            message: streamErrorMessage(error),
+          });
+        } finally {
+          controller.close();
+        }
+      },
     });
-    return jsonOk(attempt, 201);
+
+    return new Response(stream, {
+      status: 200,
+      headers: {
+        "Cache-Control": "no-store",
+        "Content-Type": "application/x-ndjson; charset=utf-8",
+        "X-Accel-Buffering": "no",
+      },
+    });
   } catch (error) {
     return handleRouteError(error);
   }
+}
+
+function streamErrorMessage(error: unknown): string {
+  if (error instanceof DocumentError && error.message.trim() !== "") {
+    return error.message;
+  }
+  return GRADE_FAILED_MESSAGE;
 }

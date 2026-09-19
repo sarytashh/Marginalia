@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { StudyFeedback } from "@/components/study/study-feedback";
 import { SourceDisclosure } from "@/components/study/source-disclosure";
 import { Textarea } from "@/components/ui/textarea";
-import type { StudyQuestion } from "@/lib/study/types";
+import { GRADE_FAILED_MESSAGE } from "@/lib/study/constants";
+import type { GradeFeedback, StudyQuestion } from "@/lib/study/types";
 
 const OPTION_LETTERS = ["A", "B", "C", "D"] as const;
 
@@ -12,24 +14,30 @@ type QuestionPhase = "answering" | "submitting" | "feedback";
 
 type StudyQuestionPanelProps = {
   error: string | null;
+  feedback: GradeFeedback | null;
   firstQuestion: boolean;
+  liveExplanation: string;
   onSkip: () => void;
   onSubmit: (answer: string) => void;
   phase: QuestionPhase;
   question: StudyQuestion;
   savedAnswer: string;
   shortcutsPaused: boolean;
+  statusMessage: string;
 };
 
 export function StudyQuestionPanel({
   error,
+  feedback,
   firstQuestion,
+  liveExplanation,
   onSkip,
   onSubmit,
   phase,
   question,
   savedAnswer,
   shortcutsPaused,
+  statusMessage,
 }: StudyQuestionPanelProps) {
   const [draft, setDraft] = useState(savedAnswer);
   const [sourceOpen, setSourceOpen] = useState(false);
@@ -119,9 +127,7 @@ export function StudyQuestionPanel({
   const submitLabel =
     phase === "submitting"
       ? "Reading your answer…"
-      : phase === "feedback"
-        ? "Answer saved"
-        : "Check answer";
+      : "Check answer";
 
   return (
     <article className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 duration-200 ease-out">
@@ -142,6 +148,7 @@ export function StudyQuestionPanel({
       question.options &&
       question.options.length > 0 ? (
         <MultipleChoice
+          correctChoiceId={phase === "feedback" ? feedback?.correctChoiceId ?? null : null}
           disabled={locked}
           name={question.id}
           options={question.options}
@@ -180,28 +187,27 @@ export function StudyQuestionPanel({
       {error ? (
         <div className="border-rule mt-8 border-t pt-6">
           <p className="text-ink text-[15px] leading-[1.65]">
-            Marginalia could not grade this answer right now. Your response is safe.
+            {GRADE_FAILED_MESSAGE}
           </p>
-          <p className="text-muted-ink mt-2 text-[13px]">{error}</p>
+          {error !== GRADE_FAILED_MESSAGE ? (
+            <p className="text-muted-ink mt-2 text-[13px]">{error}</p>
+          ) : null}
         </div>
       ) : null}
 
-      {phase === "submitting" || phase === "feedback" ? (
-        <div className="border-rule mt-8 border-t pt-6" aria-live="polite">
-          {phase === "submitting" ? (
-            <p className="text-muted-ink text-[15px]">Reading your answer…</p>
-          ) : (
-            <>
-              <h2 className="font-sans text-[13px] font-medium tracking-[0.08em] text-ink uppercase">
-                Recorded
-              </h2>
-              <p className="text-muted-ink mt-3 max-w-[36rem] text-[15px] leading-[1.65]">
-                Grading will read this answer in the next step. The question stays
-                due until then.
-              </p>
-            </>
-          )}
+      {phase === "submitting" ? (
+        <div className="border-rule mt-8 border-t pt-6">
+          <p className="text-muted-ink text-[15px]">{statusMessage}</p>
+          {liveExplanation ? (
+            <p className="text-ink mt-4 max-w-[36rem] text-[15px] leading-[1.65]">
+              {liveExplanation}
+            </p>
+          ) : null}
         </div>
+      ) : null}
+
+      {phase === "feedback" && feedback !== null ? (
+        <StudyFeedback feedback={feedback} />
       ) : null}
 
       <div className="border-rule bg-canvas/95 fixed inset-x-0 bottom-0 z-40 flex flex-col gap-3 border-t px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:static md:z-auto md:flex-row md:items-center md:border-0 md:bg-transparent md:px-0 md:pt-8 md:pb-0">
@@ -259,12 +265,14 @@ export function StudyQuestionPanel({
 }
 
 function MultipleChoice({
+  correctChoiceId,
   disabled,
   name,
   onSelect,
   options,
   selectedId,
 }: {
+  correctChoiceId: string | null;
   disabled: boolean;
   name: string;
   onSelect: (id: string) => void;
@@ -277,6 +285,8 @@ function MultipleChoice({
       {options.map((option, index) => {
         const selected = selectedId === option.id;
         const letter = optionLetter(option.id, index);
+        const isCorrect = correctChoiceId !== null && option.id === correctChoiceId;
+        const showResult = correctChoiceId !== null;
         return (
           <label
             key={option.id}
@@ -301,7 +311,19 @@ function MultipleChoice({
             >
               {letter}
             </span>
-            <span className="text-ink text-[16px] leading-[1.55]">{option.text}</span>
+            <span className="text-ink min-w-0 flex-1 text-[16px] leading-[1.55]">
+              {option.text}
+            </span>
+            {showResult && isCorrect ? (
+              <span className="text-state-solid mt-0.5 shrink-0 font-sans text-[12px] tracking-[0.04em]">
+                Correct
+              </span>
+            ) : null}
+            {showResult && selected && !isCorrect ? (
+              <span className="text-state-shaky mt-0.5 shrink-0 font-sans text-[12px] tracking-[0.04em]">
+                Your answer
+              </span>
+            ) : null}
           </label>
         );
       })}

@@ -51,6 +51,25 @@ export type StudySessionPayload = {
   questions: StudyQuestion[];
 };
 
-export type RecordedAttempt = {
+export type GradeVerdict = "correct" | "partial" | "incorrect";
+
+export type ParsedGrade = {
+  correctChoiceId: string | null;
+  explanation: string;
+  score: number;
+  verdict: GradeVerdict;
+  whatYouGotRight: string[];
+  whatYouMissed: string[];
+};
+
+export type GradeFeedback = ParsedGrade & {
   attemptId: string;
+  referenceAnswer: string;
+  sourceExcerpt: string | null;
+  supportingSentence: string | null;
+};
+
+export type SessionTopicResult = {
+  name: string;
+  verdict: GradeVerdict;
 };

@@ -9,8 +9,12 @@ import { SessionComplete } from "@/components/study/session-complete";
 import { StudyMasthead } from "@/components/study/study-masthead";
 import { StudyQuestionPanel } from "@/components/study/study-question";
 import { submitStudyAttempt } from "@/lib/study/client";
-import { SESSION_LENGTH_STORAGE_KEY } from "@/lib/study/constants";
-import type { StudySessionPayload } from "@/lib/study/types";
+import { GRADE_FAILED_MESSAGE, SESSION_LENGTH_STORAGE_KEY } from "@/lib/study/constants";
+import type {
+  GradeFeedback,
+  SessionTopicResult,
+  StudySessionPayload,
+} from "@/lib/study/types";
 
 type StudyViewProps = {
   initial: StudySessionPayload;
@@ -24,8 +28,12 @@ export function StudyView({ initial }: StudyViewProps) {
   );
   const [error, setError] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [feedback, setFeedback] = useState<GradeFeedback | null>(null);
+  const [liveExplanation, setLiveExplanation] = useState("");
+  const [statusMessage, setStatusMessage] = useState("Reading your answer…");
   const [completedCount, setCompletedCount] = useState(0);
-  const [topics, setTopics] = useState<string[]>([]);
+  const [scores, setScores] = useState<number[]>([]);
+  const [topicResults, setTopicResults] = useState<SessionTopicResult[]>([]);
   const [finished, setFinished] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
   const submittingRef = useRef(false);
@@ -76,26 +84,36 @@ export function StudyView({ initial }: StudyViewProps) {
     submittingRef.current = true;
     setDrafts((current) => ({ ...current, [question.id]: answer }));
     setError(null);
+    setFeedback(null);
+    setLiveExplanation("");
+    setStatusMessage("Reading your answer…");
     setPhase("submitting");
 
     try {
-      await submitStudyAttempt({
-        questionId: question.id,
-        userAnswer: answer,
-      });
-      setCompletedCount((count) => count + 1);
-      setTopics((current) =>
-        current.includes(question.topicName)
-          ? current
-          : [...current, question.topicName],
+      const result = await submitStudyAttempt(
+        {
+          questionId: question.id,
+          userAnswer: answer,
+        },
+        {
+          onExplanation: setLiveExplanation,
+          onStatus: setStatusMessage,
+        },
       );
+      setFeedback(result);
+      setCompletedCount((count) => count + 1);
+      setScores((current) => [...current, result.score]);
+      setTopicResults((current) => [
+        ...current,
+        { name: question.topicName, verdict: result.verdict },
+      ]);
       setPhase("feedback");
     } catch (caught) {
       submittingRef.current = false;
       setError(
-        caught instanceof Error
+        caught instanceof Error && caught.message.trim() !== ""
           ? caught.message
-          : "Marginalia could not grade this answer right now. Your response is safe.",
+          : GRADE_FAILED_MESSAGE,
       );
       setPhase("answering");
     }
@@ -103,6 +121,8 @@ export function StudyView({ initial }: StudyViewProps) {
 
   function goToNext() {
     submittingRef.current = false;
+    setFeedback(null);
+    setLiveExplanation("");
     if (index + 1 >= questions.length) {
       setFinished(true);
       return;
@@ -132,7 +152,8 @@ export function StudyView({ initial }: StudyViewProps) {
           <SessionComplete
             completedCount={completedCount}
             meta={initial.meta}
-            topics={topics}
+            scores={scores}
+            topics={topicResults}
           />
         </div>
       </div>
@@ -156,11 +177,14 @@ export function StudyView({ initial }: StudyViewProps) {
         <StudyQuestionPanel
           key={question.id}
           error={error}
+          feedback={feedback}
           firstQuestion={index === 0}
+          liveExplanation={liveExplanation}
           phase={phase}
           question={question}
           savedAnswer={drafts[question.id] ?? ""}
           shortcutsPaused={endOpen}
+          statusMessage={statusMessage}
           onSkip={goToNext}
           onSubmit={(answer) => {
             void handleSubmit(answer);
