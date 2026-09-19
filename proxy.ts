@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { isApiPath, isPublicAuthPath } from "@/lib/auth/paths";
+import { isApiPath, isPublicPath } from "@/lib/auth/paths";
 import { safeNextPath, signInHref } from "@/lib/auth/next-path";
 import type { Database } from "@/lib/database.types";
 import { getSupabasePublicEnv } from "@/lib/supabase/env";
@@ -35,7 +35,7 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname, searchParams } = request.nextUrl;
-  const isPublic = isPublicAuthPath(pathname);
+  const isPublic = isPublicPath(pathname);
   const authLink =
     searchParams.has("code") || searchParams.has("token_hash");
 

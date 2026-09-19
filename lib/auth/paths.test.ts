@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isApiPath, isPublicAuthPath } from "@/lib/auth/paths";
+import { isApiPath, isPublicAuthPath, isPublicMetadataPath } from "@/lib/auth/paths";
 
 describe("isPublicAuthPath", () => {
   it("allows the sign-in page and auth callback", () => {
@@ -22,5 +22,14 @@ describe("isApiPath", () => {
     expect(isApiPath("/api")).toBe(true);
     expect(isApiPath("/api/documents")).toBe(true);
     expect(isApiPath("/study")).toBe(false);
+  });
+});
+
+describe("isPublicMetadataPath", () => {
+  it("allows favicon, icons, and Open Graph image routes", () => {
+    expect(isPublicMetadataPath("/opengraph-image")).toBe(true);
+    expect(isPublicMetadataPath("/icon")).toBe(true);
+    expect(isPublicMetadataPath("/favicon.ico")).toBe(true);
+    expect(isPublicMetadataPath("/study")).toBe(false);
   });
 });
