@@ -11,8 +11,10 @@ build/
 next-env.d.ts
 
 # Environment
-.env
-.env*.local
+# Deliberately broad: a mistyped name such as `.env.locaд` matched neither
+# `.env` nor `.env*.local`, and would have been committable.
+.env*
+!.env.example
 
 # Testing and coverage
 coverage/
