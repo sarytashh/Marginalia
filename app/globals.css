@@ -190,6 +190,15 @@
     @apply bg-canvas text-ink;
   }
 
+  body:has([data-study-frame]) [data-app-header],
+  body:has([data-study-frame]) [data-app-mobile-nav] {
+    display: none;
+  }
+
+  body:has([data-study-frame]) main {
+    padding-bottom: 0;
+  }
+
   ::selection {
     background-color: var(--selection);
     color: var(--ink);
