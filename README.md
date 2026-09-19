@@ -18,13 +18,21 @@ _Coming soon._
 
 1. Copy `.env.example` to `.env.local` and fill in the values (never commit `.env.local`).
 2. Apply every file in `supabase/migrations/` once, in filename order, via the Supabase SQL Editor (New query → paste → Run). The first file creates the schema; later files add `progress_dashboard` and the Auth profile trigger.
-3. In the Supabase dashboard, allow the local app as a magic-link destination:
-   - **Authentication → URL Configuration → Site URL:** `http://localhost:4317`
-   - **Authentication → URL Configuration → Redirect URLs → Add:** `http://localhost:4317/auth/callback`
-   - **Authentication → Providers → Email:** enable Email. Leave magic links on. Confirm email can stay on.
+3. In the Supabase dashboard, point confirm/magic-link emails at this app (port **4317**, not 3000):
+   - **Authentication → URL Configuration → Site URL:** `http://localhost:4317` → Save
+   - **Redirect URLs → Add URL** (add each, then Save):
+     - `http://localhost:4317/auth/callback`
+     - `http://localhost:4317/auth/confirm`
+     - `http://127.0.0.1:4317/auth/callback`
+     - `http://127.0.0.1:4317/auth/confirm`
+   - **Authentication → Providers → Email:** enable Email. Leave magic links on.
+   - **Authentication → Email Templates → Confirm signup:** replace the button/link `href` with  
+     `{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email`
+   - **Authentication → Email Templates → Magic Link:** same `href`.
+     Do not use `{{ .ConfirmationURL }}` for local sign-in — that link often goes to `localhost:3000` or `supabase.co`, which this app is not serving.
 4. Install Ollama, then `ollama pull bge-m3` and `ollama pull qwen2.5:14b`.
 5. `pnpm install` and `pnpm dev` (port **4317**).
-6. Open `http://localhost:4317`. You should land on **Sign in**. Enter your email, open the magic-link message, and continue. The link has to be opened in the same browser that requested it (PKCE).
+6. Open `http://localhost:4317` on this computer. Enter your email, then open the new message **on this computer, in the same browser**. Hover the Confirm/sign-in link first: it must start with `http://localhost:4317/auth/`, not `:3000` and not `supabase.co`. Then request a fresh link from the app (old emails stay on the old URL).
 
 `pnpm ai:check` pings chat and embeddings independently and still prints both results if only one side fails. `pnpm rls:check` creates two throwaway Auth users and confirms neither can read the other's documents, chunks, questions, or attempts.
 
