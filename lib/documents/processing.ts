@@ -21,6 +21,11 @@ export type PipelineStepView = {
   state: PipelineStepState;
 };
 
+export type PipelineDocument = Pick<
+  LibraryDocument,
+  "chunkCount" | "errorMessage" | "pageCount" | "questionCount" | "status" | "topicCount"
+>;
+
 const STEP_INDEX: Record<PipelineStepId, number> = {
   upload: 0,
   reading: 1,
@@ -30,7 +35,9 @@ const STEP_INDEX: Record<PipelineStepId, number> = {
   ready: 5,
 };
 
-export function isDocumentProcessing(document: Pick<LibraryDocument, "pageCount" | "status">): boolean {
+export function isDocumentProcessing(
+  document: Pick<LibraryDocument, "pageCount" | "status">,
+): boolean {
   if (document.status === "ready" || document.status === "failed") {
     return false;
   }
@@ -42,13 +49,12 @@ export function isDocumentProcessing(document: Pick<LibraryDocument, "pageCount"
   return (
     document.status === "uploaded" ||
     document.status === "parsing" ||
-    document.status === "embedding"
+    document.status === "embedding" ||
+    document.status === "generating"
   );
 }
 
-export function getFailedStepId(
-  document: Pick<LibraryDocument, "errorMessage" | "pageCount" | "status">,
-): PipelineStepId | null {
+export function getFailedStepId(document: PipelineDocument): PipelineStepId | null {
   if (document.status !== "failed") {
     return null;
   }
@@ -57,12 +63,18 @@ export function getFailedStepId(
     return "reading";
   }
 
-  return "index";
+  if (document.chunkCount === 0) {
+    return "index";
+  }
+
+  if (document.topicCount === 0) {
+    return "topics";
+  }
+
+  return "questions";
 }
 
-export function getActiveStepId(
-  document: Pick<LibraryDocument, "pageCount" | "status">,
-): PipelineStepId | null {
+export function getActiveStepId(document: PipelineDocument): PipelineStepId | null {
   switch (document.status) {
     case "uploaded":
     case "parsing":
@@ -70,16 +82,14 @@ export function getActiveStepId(
     case "embedding":
       return "index";
     case "generating":
-      return null;
+      return document.topicCount === 0 ? "topics" : "questions";
     case "ready":
     case "failed":
       return null;
   }
 }
 
-function completedThrough(
-  document: Pick<LibraryDocument, "errorMessage" | "pageCount" | "status">,
-): number {
+function completedThrough(document: PipelineDocument): number {
   switch (document.status) {
     case "uploaded":
       return STEP_INDEX.upload;
@@ -88,7 +98,7 @@ function completedThrough(
     case "embedding":
       return STEP_INDEX.reading;
     case "generating":
-      return STEP_INDEX.index;
+      return document.topicCount === 0 ? STEP_INDEX.index : STEP_INDEX.topics;
     case "ready":
       return STEP_INDEX.ready;
     case "failed": {
@@ -101,9 +111,7 @@ function completedThrough(
   }
 }
 
-export function getProcessingSteps(
-  document: Pick<LibraryDocument, "errorMessage" | "pageCount" | "status">,
-): PipelineStepView[] {
+export function getProcessingSteps(document: PipelineDocument): PipelineStepView[] {
   const failedStep = getFailedStepId(document);
   const activeStep = getActiveStepId(document);
   const completeThrough = completedThrough(document);
@@ -130,7 +138,7 @@ export function getProcessingSteps(
 function stepDetail(
   id: PipelineStepId,
   state: PipelineStepState,
-  document: Pick<LibraryDocument, "errorMessage" | "pageCount" | "status">,
+  document: PipelineDocument,
 ): string | null {
   if (id === "reading" && state === "complete" && document.pageCount !== null) {
     return document.pageCount === 1
@@ -150,6 +158,26 @@ function stepDetail(
     return "Search index is ready.";
   }
 
+  if (id === "topics" && state === "active") {
+    return "Marginalia is naming the subjects in this material.";
+  }
+
+  if (id === "topics" && state === "complete" && document.topicCount > 0) {
+    return document.topicCount === 1
+      ? "Found 1 topic."
+      : `Found ${document.topicCount} topics.`;
+  }
+
+  if (id === "questions" && state === "active") {
+    return "Marginalia is writing questions from retrieved passages.";
+  }
+
+  if (id === "questions" && state === "complete" && document.questionCount > 0) {
+    return document.questionCount === 1
+      ? "Wrote 1 question."
+      : `Wrote ${document.questionCount} questions.`;
+  }
+
   if (state === "failed") {
     return document.errorMessage;
   }
@@ -157,9 +185,7 @@ function stepDetail(
   return null;
 }
 
-export function statusLabel(
-  document: Pick<LibraryDocument, "pageCount" | "status">,
-): string {
+export function statusLabel(document: PipelineDocument): string {
   switch (document.status) {
     case "uploaded":
       return "Reading pages";
@@ -168,7 +194,7 @@ export function statusLabel(
     case "embedding":
       return "Preparing search index";
     case "generating":
-      return "Indexed";
+      return document.topicCount === 0 ? "Finding topics" : "Writing questions";
     case "ready":
       return "Ready to study";
     case "failed":

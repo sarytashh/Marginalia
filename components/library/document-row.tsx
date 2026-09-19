@@ -1,8 +1,10 @@
 "use client";
 
-import { useId, useRef, useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { MoreHorizontal } from "lucide-react";
 
+import { DeleteMaterialDialog } from "@/components/document/delete-material-dialog";
 import { ProcessingSteps } from "@/components/library/processing-steps";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +24,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  formatQuestionCount,
+  formatTopicCount,
+} from "@/lib/documents/format";
 import { isDocumentProcessing, statusLabel } from "@/lib/documents/processing";
 import type { LibraryDocument } from "@/lib/documents/types";
 import { formatPageCount, formatUploadedOn } from "@/lib/pdf/format";
@@ -50,6 +56,8 @@ export function DocumentRow({
     formatPageCount(document.pageCount),
     `Uploaded ${formatUploadedOn(document.createdAt)}`,
     statusLabel(document),
+    document.topicCount > 0 ? formatTopicCount(document.topicCount) : null,
+    document.questionCount > 0 ? formatQuestionCount(document.questionCount) : null,
   ].filter((part): part is string => part !== null);
 
   const filenameDiffers =
@@ -58,7 +66,7 @@ export function DocumentRow({
   return (
     <article className="border-rule hover:bg-paper/80 group border-t py-6 transition-colors duration-200 ease-out">
       <div className="flex items-start gap-4">
-        <div className="min-w-0 flex-1">
+        <Link href={`/documents/${document.id}`} className="min-w-0 flex-1">
           <h3 className="font-serif text-ink group-hover:text-burgundy text-[22px] leading-[1.25] font-normal transition-colors duration-200 ease-out">
             {document.title}
           </h3>
@@ -68,7 +76,7 @@ export function DocumentRow({
           <p className="text-muted-ink mt-2 text-[12px] tracking-[0.04em]">
             {metadata.join(" · ")}
           </p>
-        </div>
+        </Link>
 
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -135,7 +143,7 @@ export function DocumentRow({
           onRename={onRename}
         />
       ) : null}
-      <DeleteDialog
+      <DeleteMaterialDialog
         document={document}
         onDelete={onDelete}
         onOpenChange={setDeleteOpen}
@@ -215,77 +223,6 @@ function RenameDialog({
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function DeleteDialog({
-  document,
-  open,
-  onOpenChange,
-  onDelete,
-}: {
-  document: LibraryDocument;
-  onDelete: (document: LibraryDocument) => Promise<void>;
-  onOpenChange: (open: boolean) => void;
-  open: boolean;
-}) {
-  const keepRef = useRef<HTMLButtonElement>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleDelete() {
-    setDeleting(true);
-    setError(null);
-    try {
-      await onDelete(document);
-      onOpenChange(false);
-    } catch (deleteError) {
-      setError(
-        deleteError instanceof Error
-          ? deleteError.message
-          : "Marginalia could not delete this material.",
-      );
-    } finally {
-      setDeleting(false);
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        showCloseButton={false}
-        className="border-rule bg-paper rounded-sm sm:max-w-md"
-        onOpenAutoFocus={(event) => {
-          event.preventDefault();
-          keepRef.current?.focus();
-        }}
-      >
-        <DialogHeader>
-          <DialogTitle className="font-serif text-[22px] font-normal">
-            Delete this material?
-          </DialogTitle>
-          <DialogDescription>
-            {document.title} and its topics, questions, attempts, and review schedule
-            will be removed. This cannot be undone.
-          </DialogDescription>
-        </DialogHeader>
-        {error ? <p className="text-state-shaky mt-3 text-[13px]">{error}</p> : null}
-        <DialogFooter className="border-rule mt-6 flex flex-col gap-2 rounded-none border-t bg-transparent sm:flex-row sm:justify-end">
-          <Button ref={keepRef} type="button" onClick={() => onOpenChange(false)}>
-            Keep material
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={deleting}
-            onClick={() => void handleDelete()}
-            className="text-state-shaky hover:text-state-shaky"
-          >
-            {deleting ? "Deleting…" : "Delete material"}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

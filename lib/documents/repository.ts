@@ -1,11 +1,16 @@
 import "server-only";
 
 import type { Enums, Tables } from "@/lib/database.types";
+import { loadCountsForDocuments } from "@/lib/documents/counts";
 import { DocumentError } from "@/lib/documents/http";
 import { toLibraryDocument } from "@/lib/documents/map";
 import { getDocumentOwnerId } from "@/lib/documents/owner";
 import { pagesStoragePath } from "@/lib/documents/storage-paths";
-import { DOCUMENTS_BUCKET, type LibraryDocument } from "@/lib/documents/types";
+import {
+  DOCUMENTS_BUCKET,
+  EMPTY_DOCUMENT_COUNTS,
+  type LibraryDocument,
+} from "@/lib/documents/types";
 import { extractPdf } from "@/lib/pdf/extract";
 import { NO_TEXT_PDF_MESSAGE } from "@/lib/pdf/constants";
 import { hasExtractableText } from "@/lib/pdf/text";
@@ -29,7 +34,7 @@ export async function listLibraryDocuments(): Promise<LibraryDocument[]> {
     throw new DocumentError("Marginalia could not load your materials. Try again.", 500);
   }
 
-  return data.map(toLibraryDocument);
+  return withCounts(data);
 }
 
 export async function getOwnedDocument(documentId: string): Promise<DocumentRow> {
@@ -52,6 +57,14 @@ export async function getOwnedDocument(documentId: string): Promise<DocumentRow>
   }
 
   return data;
+}
+
+export async function getOwnedLibraryDocument(
+  documentId: string,
+): Promise<LibraryDocument> {
+  const row = await getOwnedDocument(documentId);
+  const [mapped] = await withCounts([row]);
+  return mapped ?? toLibraryDocument(row, EMPTY_DOCUMENT_COUNTS);
 }
 
 export async function createDocumentRow(input: {
@@ -83,7 +96,8 @@ export async function createDocumentRow(input: {
     );
   }
 
-  return toLibraryDocument(data);
+  const [mapped] = await withCounts([data]);
+  return mapped ?? toLibraryDocument(data, EMPTY_DOCUMENT_COUNTS);
 }
 
 export async function renameDocument(
@@ -112,7 +126,8 @@ export async function renameDocument(
     throw new DocumentError("Marginalia could not rename this material. Try again.", 500);
   }
 
-  return toLibraryDocument(data);
+  const [mapped] = await withCounts([data]);
+  return mapped ?? toLibraryDocument(data, EMPTY_DOCUMENT_COUNTS);
 }
 
 export async function deleteDocument(documentId: string): Promise<void> {
@@ -221,4 +236,11 @@ export async function updateDocument(
     console.error(error);
     throw new DocumentError("Marginalia could not update this document. Try again.", 500);
   }
+}
+
+async function withCounts(rows: DocumentRow[]): Promise<LibraryDocument[]> {
+  const counts = await loadCountsForDocuments(rows.map((row) => row.id));
+  return rows.map((row) =>
+    toLibraryDocument(row, counts.get(row.id) ?? EMPTY_DOCUMENT_COUNTS),
+  );
 }

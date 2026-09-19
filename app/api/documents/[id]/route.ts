@@ -1,10 +1,6 @@
+import { getDocumentDetail } from "@/lib/documents/detail";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/documents/http";
-import {
-  deleteDocument,
-  getOwnedDocument,
-  renameDocument,
-} from "@/lib/documents/repository";
-import { toLibraryDocument } from "@/lib/documents/map";
+import { deleteDocument, renameDocument } from "@/lib/documents/repository";
 
 export const runtime = "nodejs";
 
@@ -14,8 +10,8 @@ export async function GET(
 ) {
   try {
     const { id } = await context.params;
-    const row = await getOwnedDocument(id);
-    return jsonOk({ document: toLibraryDocument(row) });
+    const detail = await getDocumentDetail(id);
+    return jsonOk(detail);
   } catch (error) {
     return handleRouteError(error);
   }
