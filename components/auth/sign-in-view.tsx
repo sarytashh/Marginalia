@@ -105,8 +105,9 @@ export function SignInView({ initialError, nextPath }: SignInViewProps) {
           </h1>
           <p className="text-muted-ink mt-5 text-[16px] leading-[1.65]">
             A sign-in link is on its way to{" "}
-            <span className="text-ink">{sentTo}</span>. It expires in about an hour.
-            No password is needed.
+            <span className="text-ink">{sentTo}</span>. Open it on this computer
+            in the same browser — not on your phone. The address should be
+            localhost:4317. It expires in about an hour, and no password is needed.
           </p>
           <button
             type="button"
