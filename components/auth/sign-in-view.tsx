@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { emailValidationMessage, isValidEmail, normalizeEmail } from "@/lib/auth/email";
+import { magicLinkRedirectTo } from "@/lib/auth/magic-link";
 import { LINK_ERROR_COPY, magicLinkSendError } from "@/lib/auth/messages";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
@@ -37,7 +38,7 @@ export function SignInView({ initialError, nextPath }: SignInViewProps) {
 
     try {
       const supabase = createBrowserSupabaseClient();
-      const redirectTo = magicLinkRedirectTo(nextPath);
+      const redirectTo = magicLinkRedirectTo(window.location.origin, nextPath);
       const { error } = await supabase.auth.signInWithOtp({
         email: address,
         options: {
@@ -191,10 +192,3 @@ export function SignInView({ initialError, nextPath }: SignInViewProps) {
   );
 }
 
-function magicLinkRedirectTo(nextPath: string): string {
-  const url = new URL("/auth/callback", window.location.origin);
-  if (nextPath !== "/") {
-    url.searchParams.set("next", nextPath);
-  }
-  return url.toString();
-}

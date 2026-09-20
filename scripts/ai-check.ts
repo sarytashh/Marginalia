@@ -1,3 +1,4 @@
+import { chatThinkingBody } from "../lib/ai/chat-thinking";
 import { createChatClient, createEmbeddingClient } from "../lib/ai/client";
 import {
   asCheckError,
@@ -28,6 +29,7 @@ async function checkChat(): Promise<ProviderCheckResult> {
           content: '{"task":"ping"} Return {"ok": true}',
         },
       ],
+      ...chatThinkingBody(env.baseUrl, process.env.AI_CHAT_THINKING),
     });
     const content = chat.choices[0]?.message.content;
     if (content === undefined || content === null || content === "") {
