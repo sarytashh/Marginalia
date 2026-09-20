@@ -1,3 +1,4 @@
+import { chatThinkingBody } from "@/lib/ai/chat-thinking";
 import { createChatClient } from "@/lib/ai/client";
 import { getChatEnv } from "@/lib/ai/env";
 import { AiError, toAiError } from "@/lib/ai/errors";
@@ -26,6 +27,7 @@ export async function streamChatJson(
         { role: "system", content: input.system },
         { role: "user", content: input.user },
       ],
+      ...chatThinkingBody(env.baseUrl, process.env.AI_CHAT_THINKING),
     });
 
     let text = "";

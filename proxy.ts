@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isApiPath, isPublicPath } from "@/lib/auth/paths";
 import { safeNextPath, signInHref } from "@/lib/auth/next-path";
 import type { Database } from "@/lib/database.types";
+import { isDebugPath, isProductionRuntime } from "@/lib/dev";
 import { getSupabasePublicEnv } from "@/lib/supabase/env";
 
 export async function proxy(request: NextRequest) {
@@ -30,11 +31,16 @@ export async function proxy(request: NextRequest) {
     },
   });
 
+  const { pathname, searchParams } = request.nextUrl;
+
+  if (isProductionRuntime() && isDebugPath(pathname)) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname, searchParams } = request.nextUrl;
   const isPublic = isPublicPath(pathname);
   const authLink =
     searchParams.has("code") || searchParams.has("token_hash");
