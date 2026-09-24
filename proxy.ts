@@ -37,25 +37,24 @@ export async function proxy(request: NextRequest) {
     return new NextResponse(null, { status: 404 });
   }
 
+  const authLink =
+    searchParams.has("code") || searchParams.has("token_hash");
+
+  if (authLink && pathname !== "/auth/callback" && pathname !== "/auth/confirm") {
+    const callbackUrl = request.nextUrl.clone();
+    callbackUrl.pathname = "/auth/callback";
+    return NextResponse.redirect(callbackUrl);
+  }
+
+  if (authLink) {
+    return NextResponse.next({ request });
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   const isPublic = isPublicPath(pathname);
-  const authLink =
-    searchParams.has("code") || searchParams.has("token_hash");
-
-  if (
-    authLink &&
-    pathname !== "/auth/callback" &&
-    pathname !== "/auth/confirm"
-  ) {
-    const callbackUrl = request.nextUrl.clone();
-    callbackUrl.pathname = "/auth/callback";
-    const redirectResponse = NextResponse.redirect(callbackUrl);
-    copyCookies(supabaseResponse, redirectResponse);
-    return redirectResponse;
-  }
 
   if (user === null && !isPublic) {
     if (isApiPath(pathname)) {

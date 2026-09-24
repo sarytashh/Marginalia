@@ -53,9 +53,9 @@ The same idea shows up in the provider layer. Chat and embeddings are separate O
      - After deploy, also add `https://YOUR_DOMAIN/auth/callback` and `https://YOUR_DOMAIN/auth/confirm`
    - **Authentication → Providers → Email:** enable Email. Leave magic links on.
    - **Authentication → Email Templates → Confirm signup:** set the button/link `href` to
-     `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=signup`
+     `{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=signup`
    - **Authentication → Email Templates → Magic Link:**
-     `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=magiclink`
+     `{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=magiclink`
      Do not use `{{ .ConfirmationURL }}` — that link often goes to `localhost:3000` or `supabase.co`.
      `RedirectTo` is the origin the user signed in from, so local and production can share one project.
 4. Install Ollama, then `ollama pull bge-m3` and `ollama pull qwen2.5:14b`.
