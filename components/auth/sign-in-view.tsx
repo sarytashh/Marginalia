@@ -38,7 +38,8 @@ export function SignInView({ initialError, nextPath }: SignInViewProps) {
 
     try {
       const supabase = createBrowserSupabaseClient();
-      const redirectTo = magicLinkRedirectTo(window.location.origin, nextPath);
+      const redirectTo = magicLinkRedirectTo(window.location.origin);
+      window.sessionStorage.setItem("marginalia.authNext", nextPath);
       const { error } = await supabase.auth.signInWithOtp({
         email: address,
         options: {

@@ -13,7 +13,9 @@ export function AuthCallbackView() {
   const [message, setMessage] = useState("Signing you in…");
 
   useEffect(() => {
-    const nextPath = safeNextPath(searchParams.get("next"));
+    const storedNext = window.sessionStorage.getItem("marginalia.authNext");
+    const nextPath = safeNextPath(searchParams.get("next") ?? storedNext);
+    window.sessionStorage.removeItem("marginalia.authNext");
     const supabase = createBrowserSupabaseClient();
 
     async function completeSignIn() {
