@@ -546,8 +546,7 @@ Before answering, the user may open the source:
 
 - label uses a small page/document icon and exact page;
 - expansion reveals a cream excerpt block with a burgundy left rule;
-- heck answer.”
-Shortcut shown quietlsource text is serif body copy;
+- source text is serif body copy;
 - show enough surrounding context to understand the passage;
 - collapse action is obvious;
 - opening the source does not affect grading.
@@ -564,7 +563,8 @@ Do not hijack typing inside the textarea.
 - automatically focus on desktop, but avoid forcing the mobile keyboard open on page load;
 - preserve text until the attempt is successfully stored.
 
-Primary action: “Cy: `⌘ Enter` or `Ctrl Enter`.
+Primary action: “Check answer.”
+Shortcut shown quietly: `⌘ Enter` or `Ctrl Enter`.
 
 Empty submit does not trigger grading. Give subtle inline guidance rather than an error toast.
 

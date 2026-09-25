@@ -1,6 +1,6 @@
 import { DocumentError, handleRouteError, jsonError } from "@/lib/documents/http";
 import { gradeAndRecordAttempt } from "@/lib/study/attempts";
-import { GRADE_FAILED_MESSAGE } from "@/lib/study/constants";
+import { GRADE_FAILED_MESSAGE, MAX_ANSWER_CHARS } from "@/lib/study/constants";
 import { encodeGradeStreamEvent } from "@/lib/study/events";
 import type { GradeStreamEvent } from "@/lib/study/events";
 
@@ -24,6 +24,12 @@ export async function POST(request: Request) {
     }
     if (typeof userAnswer !== "string") {
       return jsonError("Write a few words before checking your answer.", 400);
+    }
+    if (userAnswer.length > MAX_ANSWER_CHARS) {
+      return jsonError(
+        `Answers can be at most ${MAX_ANSWER_CHARS.toLocaleString("en-US")} characters. Shorten it and try again.`,
+        400,
+      );
     }
 
     const encoder = new TextEncoder();

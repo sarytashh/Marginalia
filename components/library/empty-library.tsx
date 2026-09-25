@@ -38,7 +38,7 @@ export function EmptyLibrary({ onChoosePdf }: EmptyLibraryProps) {
             >
               Choose a PDF
             </button>
-            <p className="text-muted-ink text-[14px]">
+            <p className="text-muted-ink text-[14px] pointer-coarse:hidden">
               or drop it anywhere on this page.
             </p>
           </div>

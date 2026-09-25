@@ -92,7 +92,7 @@ function QuestionRow({
       </button>
 
       {open ? (
-        <div className="mt-5 ml-[3.25rem] max-w-[38rem] duration-200 ease-out">
+        <div className="mt-5 ml-[3.25rem] max-w-[38rem] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 duration-200 ease-out">
           <p className="label-editorial">A complete answer</p>
           <p className="font-serif text-ink mt-2 text-[17px] leading-[1.55]">
             {question.referenceAnswer}
