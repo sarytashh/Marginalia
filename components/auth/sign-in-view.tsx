@@ -26,6 +26,7 @@ export function SignInView({ initialError, nextPath }: SignInViewProps) {
   const [sendError, setSendError] = useState<string | null>(null);
   const [linkError, setLinkError] = useState<"expired" | "invalid" | null>(initialError);
   const [sentTo, setSentTo] = useState<string | null>(null);
+  const [sentFrom, setSentFrom] = useState<string | null>(null);
 
   const sending = status === "sending";
   const invalid = fieldError !== null;
@@ -55,6 +56,7 @@ export function SignInView({ initialError, nextPath }: SignInViewProps) {
       }
 
       setSentTo(address);
+      setSentFrom(window.location.host);
       setStatus("sent");
     } catch (caught) {
       const message =
@@ -103,13 +105,19 @@ export function SignInView({ initialError, nextPath }: SignInViewProps) {
       {status === "sent" && sentTo !== null ? (
         <div className="mt-10">
           <h1 className="font-serif text-ink text-[34px] leading-[1.12] font-normal text-balance md:text-[46px]">
-            Check your inbox
+            Check your inbox.
           </h1>
           <p className="text-muted-ink mt-5 text-[16px] leading-[1.65]">
             A sign-in link is on its way to{" "}
-            <span className="text-ink">{sentTo}</span>. Open it on this computer
-            in the same browser — not on your phone. The address should be
-            localhost:4317. It expires in about an hour, and no password is needed.
+            <span className="text-ink">{sentTo}</span>. Open it in this browser:
+            the link signs in whichever device opens it.
+            {sentFrom ? (
+              <>
+                {" "}It should start with{" "}
+                <span className="text-ink">{sentFrom}</span>.
+              </>
+            ) : null}{" "}
+            It expires in about an hour, and no password is needed.
           </p>
           <button
             type="button"

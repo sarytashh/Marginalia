@@ -10,6 +10,7 @@ import { StudyMasthead } from "@/components/study/study-masthead";
 import { StudyQuestionPanel } from "@/components/study/study-question";
 import { submitStudyAttempt } from "@/lib/study/client";
 import { GRADE_FAILED_MESSAGE, SESSION_LENGTH_STORAGE_KEY } from "@/lib/study/constants";
+import { browserDraftStorage, clearDraft, pruneDrafts } from "@/lib/study/drafts";
 import type {
   GradeFeedback,
   SessionTopicResult,
@@ -57,6 +58,18 @@ export function StudyView({ initial }: StudyViewProps) {
   }, [initial.meta.scope.lengthLabel, questions.length]);
 
   useEffect(() => {
+    const storage = browserDraftStorage();
+    if (storage === null) {
+      return;
+    }
+    try {
+      pruneDrafts(storage);
+    } catch {
+      // Storage may be blocked; drafts are a convenience, not a requirement.
+    }
+  }, []);
+
+  useEffect(() => {
     if (!inSession) {
       return;
     }
@@ -100,6 +113,14 @@ export function StudyView({ initial }: StudyViewProps) {
           onStatus: setStatusMessage,
         },
       );
+      const storage = browserDraftStorage();
+      if (storage !== null) {
+        try {
+          clearDraft(storage, question.id);
+        } catch {
+          // Storage may be blocked; the attempt itself is already saved.
+        }
+      }
       setFeedback(result);
       setCompletedCount((count) => count + 1);
       setScores((current) => [...current, result.score]);

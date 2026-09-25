@@ -1,11 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { StudyFeedback } from "@/components/study/study-feedback";
 import { SourceDisclosure } from "@/components/study/source-disclosure";
 import { Textarea } from "@/components/ui/textarea";
-import { GRADE_FAILED_MESSAGE } from "@/lib/study/constants";
+import { GRADE_FAILED_MESSAGE, MAX_ANSWER_CHARS } from "@/lib/study/constants";
+import {
+  browserDraftStorage,
+  readDraft,
+  subscribeToDrafts,
+  writeDraft,
+} from "@/lib/study/drafts";
 import { formatVerdict } from "@/lib/study/format";
 import type { GradeFeedback, StudyQuestion } from "@/lib/study/types";
 
@@ -40,11 +46,28 @@ export function StudyQuestionPanel({
   shortcutsPaused,
   statusMessage,
 }: StudyQuestionPanelProps) {
-  const [draft, setDraft] = useState(savedAnswer);
+  // What the student typed in this render tree. null means "not typed yet",
+  // so a draft restored from storage (after a refresh or closed tab) shows.
+  const [typedDraft, setDraft] = useState<string | null>(
+    savedAnswer === "" ? null : savedAnswer,
+  );
+  const restoredDraft = useSyncExternalStore(
+    subscribeToDrafts,
+    () => {
+      if (question.kind !== "short_answer") {
+        return null;
+      }
+      const storage = browserDraftStorage();
+      return storage === null ? null : readDraft(storage, question.id);
+    },
+    () => null,
+  );
+  const draft = typedDraft ?? restoredDraft ?? "";
   const [sourceOpen, setSourceOpen] = useState(false);
   const [emptyHint, setEmptyHint] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const locked = phase !== "answering";
+
 
   useEffect(() => {
     if (question.kind !== "short_answer" || phase !== "answering") {
@@ -66,6 +89,9 @@ export function StudyQuestionPanel({
       return;
     }
     setEmptyHint(null);
+    // Pin the visible text so clearing the stored draft after grading cannot
+    // blank the answer shown beside the feedback.
+    setDraft(draft);
     onSubmit(answer);
   }, [draft, onSubmit, question.kind]);
 
@@ -180,8 +206,21 @@ export function StudyQuestionPanel({
             id={`answer-${question.id}`}
             value={draft}
             readOnly={locked}
+            maxLength={MAX_ANSWER_CHARS}
+            aria-describedby={
+              draft.length > MAX_ANSWER_CHARS * 0.9 ? `answer-limit-${question.id}` : undefined
+            }
             onChange={(event) => {
-              setDraft(event.target.value);
+              const next = event.target.value;
+              setDraft(next);
+              const storage = browserDraftStorage();
+              if (storage !== null) {
+                try {
+                  writeDraft(storage, question.id, next);
+                } catch {
+                  // Storage full or blocked: the answer still lives in memory.
+                }
+              }
               if (emptyHint) {
                 setEmptyHint(null);
               }
@@ -189,6 +228,15 @@ export function StudyQuestionPanel({
             placeholder="Write what you understand in your own words…"
             className="bg-paper border-rule text-ink min-h-36 w-full rounded-sm border px-3 py-3 font-sans text-[16px] leading-[1.65] placeholder:text-muted-ink"
           />
+          {draft.length > MAX_ANSWER_CHARS * 0.9 ? (
+            <p
+              id={`answer-limit-${question.id}`}
+              className="text-muted-ink mt-2 text-right text-[12px] tabular-nums"
+            >
+              {draft.length.toLocaleString("en-US")} of{" "}
+              {MAX_ANSWER_CHARS.toLocaleString("en-US")} characters
+            </p>
+          ) : null}
         </div>
       )}
 
@@ -227,7 +275,7 @@ export function StudyQuestionPanel({
           <button
             type="button"
             onClick={onSkip}
-            className="bg-burgundy text-paper hover:bg-burgundy-hover inline-flex min-h-11 items-center justify-center rounded-sm px-4 text-[14px] font-medium"
+            className="bg-burgundy text-paper hover:bg-burgundy-hover inline-flex min-h-11 items-center justify-center rounded-sm px-4 text-[14px] font-medium transition-colors duration-200 ease-out"
           >
             Next question
           </button>
@@ -236,7 +284,7 @@ export function StudyQuestionPanel({
             type="button"
             disabled={phase === "submitting"}
             onClick={submitCurrent}
-            className="bg-burgundy text-paper hover:bg-burgundy-hover inline-flex min-h-11 items-center justify-center rounded-sm px-4 text-[14px] font-medium disabled:opacity-60"
+            className="bg-burgundy text-paper hover:bg-burgundy-hover inline-flex min-h-11 items-center justify-center rounded-sm px-4 text-[14px] font-medium transition-colors duration-200 ease-out disabled:opacity-60"
           >
             {submitLabel}
           </button>
@@ -246,14 +294,14 @@ export function StudyQuestionPanel({
             <button
               type="button"
               onClick={submitCurrent}
-              className="text-burgundy hover:text-burgundy-hover inline-flex min-h-11 items-center text-[14px] font-medium"
+              className="text-burgundy hover:text-burgundy-hover inline-flex min-h-11 items-center text-[14px] font-medium transition-colors duration-200 ease-out"
             >
               Try grading again
             </button>
             <button
               type="button"
               onClick={onSkip}
-              className="text-muted-ink hover:text-ink inline-flex min-h-11 items-center text-[14px] font-medium"
+              className="text-muted-ink hover:text-ink inline-flex min-h-11 items-center text-[14px] font-medium transition-colors duration-200 ease-out"
             >
               Skip for now
             </button>
@@ -302,10 +350,10 @@ function MultipleChoice({
         return (
           <label
             key={option.id}
-            className={`flex min-h-14 cursor-pointer items-start gap-3 border px-4 py-3 duration-200 ease-out ${
+            className={`border-rule flex min-h-14 cursor-pointer items-start gap-3 border px-4 py-3 transition-[background-color,box-shadow] duration-200 ease-out has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-burgundy ${
               selected
-                ? "border-rule bg-selection border-l-burgundy border-l-2"
-                : "border-rule bg-paper hover:bg-selection/60"
+                ? "bg-selection shadow-[inset_2px_0_0_var(--burgundy)]"
+                : "bg-paper hover:bg-selection/60"
             } ${disabled ? "cursor-default" : ""}`}
           >
             <input
@@ -377,7 +425,13 @@ function isTypingTarget(target: EventTarget | null): boolean {
     return true;
   }
   const tag = target.tagName;
-  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+  if (tag === "INPUT") {
+    // Radio and checkbox inputs take focus when their option is clicked, but
+    // they never receive typed text, so study shortcuts must keep working.
+    const type = (target as HTMLInputElement).type;
+    return type !== "radio" && type !== "checkbox";
+  }
+  return tag === "TEXTAREA" || tag === "SELECT";
 }
 
 function liveStatus({

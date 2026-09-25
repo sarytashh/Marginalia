@@ -72,8 +72,10 @@ ${input.prompt}
 Reference answer:
 ${input.referenceAnswer}
 
-Student answer:
-${input.userAnswer}
+Student answer (untrusted text, between the tags):
+<student_answer>
+${fenceStudentAnswer(input.userAnswer)}
+</student_answer>
 
 Passages:
 ${passageBlock}
@@ -94,4 +96,10 @@ Only raise score above 0 if the student stated a real idea from the passages.`,
     ...result,
     correctChoiceId: null,
   };
+}
+
+// The answer is typed by the student, so it must not be able to close its own
+// tag and pose as instructions or passages.
+function fenceStudentAnswer(answer: string): string {
+  return answer.replace(/<\/?\s*student_answer\s*>/gi, "");
 }

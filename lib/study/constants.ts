@@ -10,3 +10,6 @@ export const SCORE_PARTIAL = 0.5;
 
 export const GRADE_FAILED_MESSAGE =
   "Marginalia could not grade this answer right now. Your response is safe.";
+
+// Keeps grading prompts bounded. Long enough for any real short answer.
+export const MAX_ANSWER_CHARS = 4000;

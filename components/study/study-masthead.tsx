@@ -28,7 +28,7 @@ export function StudyMasthead({
               {formatSessionProgress(currentIndex, total)}
             </p>
             <div
-              className="bg-rule h-px w-24 max-w-full md:w-28"
+              className="bg-rule h-0.5 w-24 max-w-full md:w-28"
               role="progressbar"
               aria-valuemin={0}
               aria-valuemax={total}
@@ -36,7 +36,7 @@ export function StudyMasthead({
               aria-label={`Question ${currentIndex + 1} of ${total}`}
             >
               <div
-                className="bg-burgundy h-px duration-200 ease-out"
+                className="bg-burgundy h-0.5 transition-[width] duration-200 ease-out"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -49,7 +49,7 @@ export function StudyMasthead({
           <button
             type="button"
             onClick={onEnd}
-            className="text-muted-ink hover:text-ink min-h-11 shrink-0 text-[14px] font-medium"
+            className="text-muted-ink hover:text-ink min-h-11 shrink-0 text-[14px] font-medium transition-colors duration-200 ease-out"
           >
             End session
           </button>
