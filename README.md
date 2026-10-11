@@ -43,7 +43,3 @@ You need a Supabase project, Node 22, pnpm, and either Ollama (local) or DeepSee
 pnpm install
 pnpm dev   # http://localhost:4317
 ```
-
----
-
-Planning material lives in [docs/plan.md](docs/plan.md) and [docs/design.md](docs/design.md).
