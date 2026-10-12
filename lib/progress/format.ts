@@ -31,9 +31,14 @@ const MONTH_FORMATTER = new Intl.DateTimeFormat("en-GB", {
 });
 
 export function formatProgressHeading(topics: readonly ProgressTopic[]): string {
-  const weakest = topics[0];
-  if (weakest === undefined) {
+  if (topics.length === 0) {
     return "Your first answers will become a study map.";
+  }
+  // A topic that was never practiced has 0% mastery and sorts first, but it
+  // has not been failed. Name the weakest topic the student has worked on.
+  const weakest = topics.find((topic) => topic.masteryState !== "new");
+  if (weakest === undefined) {
+    return "Answer a few questions to see where you stand.";
   }
   if (weakest.masteryState === "solid") {
     return "These ideas are holding.";

@@ -36,6 +36,21 @@ describe("formatProgressHeading", () => {
     ).toBe("Limitations of Dijkstra's algorithm needs another pass.");
   });
 
+  it("skips topics that were never practiced", () => {
+    expect(
+      formatProgressHeading([
+        topic({ id: "t1", name: "Feature scaling", masteryState: "new" }),
+        topic({ id: "t2", name: "Rational functions", masteryState: "learning", masteryValue: 0.27 }),
+      ]),
+    ).toBe("Rational functions needs another pass.");
+  });
+
+  it("invites practice when no topic has been answered yet", () => {
+    expect(
+      formatProgressHeading([topic({ id: "t1", name: "Feature scaling", masteryState: "new" })]),
+    ).toBe("Answer a few questions to see where you stand.");
+  });
+
   it("uses the empty-state heading when there are no topics", () => {
     expect(formatProgressHeading([])).toBe(
       "Your first answers will become a study map.",
