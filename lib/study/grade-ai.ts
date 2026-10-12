@@ -6,6 +6,7 @@ import { extractJsonStringField } from "@/lib/ai/extract-json-field";
 import { GRADING_SYSTEM_PROMPT } from "@/lib/ai/prompts";
 import { streamChatJson } from "@/lib/ai/stream-chat";
 import { gradeModelSchema, gradeNonAnswer } from "@/lib/study/grade";
+import { findEquivalentReference } from "@/lib/study/math-equivalence";
 import { isNonAnswer } from "@/lib/study/non-answer";
 import type { ParsedGrade } from "@/lib/study/types";
 
@@ -20,6 +21,23 @@ export async function gradeShortAnswer(input: {
 }): Promise<ParsedGrade> {
   if (isNonAnswer(input.userAnswer)) {
     const grade = gradeNonAnswer(input.referenceAnswer);
+    input.onExplanation?.(grade.explanation);
+    return grade;
+  }
+
+  // A formula that evaluates to the reference result is correct however it
+  // is written. Check this with arithmetic before asking the model, which
+  // is unreliable at spotting equivalent forms.
+  const equivalent = findEquivalentReference(input.userAnswer, input.referenceAnswer);
+  if (equivalent !== null) {
+    const grade: ParsedGrade = {
+      score: 1,
+      verdict: "correct",
+      whatYouGotRight: [`Your result is equivalent to ${equivalent}.`],
+      whatYouMissed: [],
+      explanation: `Your result is mathematically equivalent to the reference answer: ${input.referenceAnswer.trim()}`,
+      correctChoiceId: null,
+    };
     input.onExplanation?.(grade.explanation);
     return grade;
   }
