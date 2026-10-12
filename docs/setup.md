@@ -27,7 +27,7 @@ Everything needed to run Marginalia locally or host it. For what the app does an
 
 ## Scripts
 
-`pnpm ai:check` pings chat and embeddings independently and still prints both results if only one side fails. `pnpm rls:check` creates two throwaway Auth users and confirms neither can read the other's documents, chunks, questions, or attempts. `pnpm typecheck`, `pnpm lint`, and `pnpm test` are what CI runs. `pnpm build` is the production compile.
+`pnpm ai:check` pings chat and embeddings independently and still prints both results if only one side fails. `pnpm rls:check` creates two throwaway Auth users and confirms neither can read the other's documents, chunks, questions, or attempts. `pnpm auth:link you@example.com` prints a one-time local sign-in link without sending an email, which helps when the hourly email limit is reached. `pnpm typecheck`, `pnpm lint`, and `pnpm test` are what CI runs. `pnpm build` is the production compile.
 
 ## Environment variables
 
