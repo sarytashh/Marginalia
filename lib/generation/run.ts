@@ -21,6 +21,7 @@ import {
   QUESTION_RETRIEVAL_LIMIT,
 } from "@/lib/generation/limits";
 import { generateGroundedQuestions } from "@/lib/generation/questions";
+import { selectTopicPassages } from "@/lib/generation/topic-passages";
 import { extractTopicsFromChunks } from "@/lib/generation/topics";
 import { searchChunks } from "@/lib/retrieval";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
@@ -118,10 +119,12 @@ async function runStudyMaterialGeneration(
       selected.map((topic) =>
         limit(async () => {
           try {
-            const passages = await searchChunks(
-              documentId,
-              `${topic.name}. ${topic.summary}`,
-              QUESTION_RETRIEVAL_LIMIT,
+            const passages = selectTopicPassages(
+              await searchChunks(
+                documentId,
+                `${topic.name}. ${topic.summary}`,
+                QUESTION_RETRIEVAL_LIMIT,
+              ),
             );
 
             if (passages.length === 0) {

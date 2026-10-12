@@ -19,7 +19,9 @@ This grounding rule is mandatory:
 - A question about material that is not in the passages is a bug.
 
 Write a mix of short_answer and multiple_choice. Most questions should be short_answer. Include ${MIN_MULTIPLE_CHOICE_PER_TOPIC} to ${MAX_MULTIPLE_CHOICE_PER_TOPIC} multiple_choice questions when the passages support plausible distractors drawn from the same material. Do not return only short_answer if a grounded multiple-choice item is possible.
-Each prompt must test a different idea. Duplicate or near-duplicate questions are a bug.
+Every question must be about the named topic. Passages often also cover neighbouring topics; ignore that material, because other topics get their own questions.
+Each prompt must test a different idea. Duplicate or near-duplicate questions are a bug, including the same question reworded.
+Favour understanding over recall. At most one third of the questions may simply ask for a definition or formula. The rest should ask why something holds, what happens when something changes, how two ideas compare, or how to apply a rule to a small case, as long as the passages support the answer.
 Each referenceAnswer is two to four sentences, still grounded only in the passages.
 Difficulty is 1 (introductory), 2 (standard), or 3 (challenging).
 
