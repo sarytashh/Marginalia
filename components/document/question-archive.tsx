@@ -11,6 +11,7 @@ import {
   formatSourcePages,
 } from "@/lib/documents/format";
 import type { DocumentQuestion, DocumentTopic } from "@/lib/documents/types";
+import { MathText } from "@/components/math/math-text";
 
 type QuestionArchiveProps = {
   documentId: string;
@@ -83,7 +84,7 @@ function QuestionRow({
         </span>
         <span className="min-w-0 flex-1">
           <span className="font-serif text-ink block text-[20px] leading-[1.4] font-normal">
-            {question.prompt}
+            <MathText text={question.prompt} />
           </span>
           <span className="text-muted-ink mt-2 block text-[12px] tracking-[0.04em]">
             {metadata.join(" · ")}
@@ -95,7 +96,7 @@ function QuestionRow({
         <div className="mt-5 ml-[3.25rem] max-w-[38rem] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 duration-200 ease-out">
           <p className="label-editorial">A complete answer</p>
           <p className="font-serif text-ink mt-2 text-[17px] leading-[1.55]">
-            {question.referenceAnswer}
+            <MathText text={question.referenceAnswer} />
           </p>
 
           {question.sourceExcerpt ? (

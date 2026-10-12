@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { formatVerdict } from "@/lib/study/format";
 import type { GradeFeedback, GradeVerdict } from "@/lib/study/types";
+import { MathText } from "@/components/math/math-text";
 
 type StudyFeedbackProps = {
   feedback: GradeFeedback;
@@ -26,7 +27,7 @@ export function StudyFeedback({ feedback }: StudyFeedbackProps) {
       </h2>
 
       <p className="text-ink mt-4 max-w-[36rem] text-[15px] leading-[1.65]">
-        {feedback.explanation}
+        <MathText text={feedback.explanation} />
       </p>
 
       {feedback.whatYouGotRight.length > 0 ? (
@@ -80,7 +81,9 @@ function FeedbackList({
       <p className="label-editorial">{heading}</p>
       <ul className="text-ink mt-2 max-w-[36rem] list-disc space-y-1 pl-5 text-[15px] leading-[1.65]">
         {items.map((item) => (
-          <li key={item}>{item}</li>
+          <li key={item}>
+            <MathText text={item} />
+          </li>
         ))}
       </ul>
     </div>
@@ -95,7 +98,7 @@ function ReferenceAnswer({ text }: { text: string }) {
     <div className="mt-6">
       <p className="label-editorial">A complete answer</p>
       <p className="font-serif text-ink mt-2 max-w-[36rem] text-[17px] leading-[1.55]">
-        {text}
+        <MathText text={text} />
       </p>
     </div>
   );

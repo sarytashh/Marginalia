@@ -14,6 +14,7 @@ import {
 } from "@/lib/study/drafts";
 import { formatVerdict } from "@/lib/study/format";
 import type { GradeFeedback, StudyQuestion } from "@/lib/study/types";
+import { MathText } from "@/components/math/math-text";
 
 const OPTION_LETTERS = ["A", "B", "C", "D"] as const;
 
@@ -171,7 +172,7 @@ export function StudyQuestionPanel({
       </p>
       <p className="label-editorial">{question.topicName}</p>
       <h1 className="font-serif text-ink mt-4 max-w-[40rem] text-[25px] leading-[1.4] font-normal text-pretty md:text-[34px] md:leading-[1.4]">
-        {question.prompt}
+        <MathText text={question.prompt} />
       </h1>
 
       <SourceDisclosure
@@ -384,7 +385,7 @@ function MultipleChoice({
               {letter}
             </span>
             <span className="text-ink min-w-0 flex-1 text-[16px] leading-[1.55]">
-              {option.text}
+              <MathText text={option.text} />
             </span>
             {showResult && isCorrect ? (
               <span className="text-state-solid mt-0.5 shrink-0 font-sans text-[12px] tracking-[0.04em]">
