@@ -1,3 +1,4 @@
+import { NOT_ENOUGH_MATERIAL_MESSAGE } from "@/lib/documents/constants";
 import type { LibraryDocument } from "@/lib/documents/types";
 import { NO_TEXT_PDF_MESSAGE } from "@/lib/pdf/constants";
 
@@ -200,4 +201,9 @@ export function statusLabel(document: PipelineDocument): string {
     case "failed":
       return "Failed";
   }
+}
+
+/** Retrying cannot help when the PDF itself has too little explanation. */
+export function canRetryDocument(document: Pick<PipelineDocument, "errorMessage" | "status">): boolean {
+  return document.status === "failed" && document.errorMessage !== NOT_ENOUGH_MATERIAL_MESSAGE;
 }

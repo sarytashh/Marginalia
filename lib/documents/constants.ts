@@ -9,3 +9,6 @@ export const QUESTIONS_FAILED_MESSAGE =
 
 export const INTERRUPTED_MESSAGE =
   "Processing stopped before it finished, usually because the server restarted. Try this step again.";
+
+export const NOT_ENOUGH_MATERIAL_MESSAGE =
+  "This PDF does not explain enough to write questions from. It may be a list of exercises or a short handout. Upload lecture notes or slides that explain the topic instead.";

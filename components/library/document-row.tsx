@@ -28,7 +28,11 @@ import {
   formatQuestionCount,
   formatTopicCount,
 } from "@/lib/documents/format";
-import { isDocumentProcessing, statusLabel } from "@/lib/documents/processing";
+import {
+  canRetryDocument,
+  isDocumentProcessing,
+  statusLabel,
+} from "@/lib/documents/processing";
 import type { LibraryDocument } from "@/lib/documents/types";
 import { formatPageCount, formatUploadedOn } from "@/lib/pdf/format";
 import { titleFromFilename } from "@/lib/pdf/title";
@@ -97,7 +101,13 @@ export function DocumentRow({
 
       {showPipeline ? <ProcessingSteps document={document} /> : null}
 
-      {document.status === "failed" ? (
+      {document.status === "failed" && !canRetryDocument(document) ? (
+        <p className="text-muted-ink mt-5 max-w-[36rem] text-[13px] leading-[1.6]">
+          Delete this material from the menu and upload lecture notes or slides that
+          explain the topic. Exercise sheets work best alongside the lecture they
+          come from.
+        </p>
+      ) : document.status === "failed" ? (
         <div className="mt-5 flex flex-col items-start gap-3">
           <button
             type="button"

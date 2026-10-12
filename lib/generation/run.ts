@@ -6,6 +6,7 @@ import { AiError } from "@/lib/ai/errors";
 import { getChatEnv } from "@/lib/ai/env";
 import type { Json } from "@/lib/database.types";
 import {
+  NOT_ENOUGH_MATERIAL_MESSAGE,
   QUESTIONS_FAILED_MESSAGE,
   SEARCH_INDEX_FAILED_MESSAGE,
   TOPICS_FAILED_MESSAGE,
@@ -17,11 +18,13 @@ import {
   topicNameKey,
 } from "@/lib/generation/dedupe";
 import {
+  MIN_DOCUMENT_WORDS,
   QUESTION_GENERATION_CONCURRENCY,
   QUESTION_RETRIEVAL_LIMIT,
 } from "@/lib/generation/limits";
 import { generateGroundedQuestions } from "@/lib/generation/questions";
 import { selectTopicPassages } from "@/lib/generation/topic-passages";
+import { countWords } from "@/lib/generation/word-count";
 import { extractTopicsFromChunks } from "@/lib/generation/topics";
 import { searchChunks } from "@/lib/retrieval";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
@@ -88,6 +91,11 @@ async function runStudyMaterialGeneration(
       return;
     }
 
+    if (options.topicId === undefined && countWords(chunks) < MIN_DOCUMENT_WORDS) {
+      await finishGeneration(documentId, NOT_ENOUGH_MATERIAL_MESSAGE);
+      return;
+    }
+
     if (options.replace === true) {
       await deleteGeneratedStudyMaterial(documentId);
     }
@@ -114,6 +122,9 @@ async function runStudyMaterialGeneration(
     const existingPromptTexts = existingQuestions.map((question) => question.prompt);
     const seenPrompts = new Set(existingPromptTexts.map((prompt) => questionPromptKey(prompt)));
     const limit = pLimit(QUESTION_GENERATION_CONCURRENCY);
+    // Topics whose generation threw (model or network errors), as opposed to
+    // topics where the model found nothing groundable to ask.
+    let failedTopics = 0;
 
     await Promise.all(
       selected.map((topic) =>
@@ -150,6 +161,7 @@ async function runStudyMaterialGeneration(
 
             await insertQuestions(documentId, userId, topic.id, unique);
           } catch (error) {
+            failedTopics += 1;
             console.error(error);
           }
         }),
@@ -158,7 +170,13 @@ async function runStudyMaterialGeneration(
 
     const questionCount = await countQuestions(documentId);
     if (questionCount === 0) {
-      await finishGeneration(documentId, QUESTIONS_FAILED_MESSAGE);
+      // The model answered for every topic but could not ground a single
+      // question: retrying will not help, the material itself is too thin.
+      const thinMaterial = failedTopics === 0 && options.topicId === undefined;
+      await finishGeneration(
+        documentId,
+        thinMaterial ? NOT_ENOUGH_MATERIAL_MESSAGE : QUESTIONS_FAILED_MESSAGE,
+      );
       return;
     }
 
@@ -420,3 +438,4 @@ function generationErrorMessage(error: unknown, topicCount: number): string {
   }
   return topicCount === 0 ? TOPICS_FAILED_MESSAGE : QUESTIONS_FAILED_MESSAGE;
 }
+

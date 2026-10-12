@@ -11,3 +11,7 @@ export const MAX_MULTIPLE_CHOICE_PER_TOPIC = 3;
 
 export const QUESTION_RETRIEVAL_LIMIT = 10;
 export const QUESTION_GENERATION_CONCURRENCY = 2;
+
+// Below this many words of extracted text there is not enough explanation
+// to ground topics and questions in.
+export const MIN_DOCUMENT_WORDS = 120;
