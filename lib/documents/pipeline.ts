@@ -1,6 +1,7 @@
 import "server-only";
 
 import { batchItems } from "@/lib/ai/batch";
+import { claimDocumentJob, releaseWhenSettled } from "@/lib/documents/active-jobs";
 import { embedTexts } from "@/lib/ai/embed";
 import { AiError } from "@/lib/ai/errors";
 import { chunkPages, type SourceChunk } from "@/lib/chunker";
@@ -89,10 +90,37 @@ export async function embedStoredPages(documentId: string, userId: string): Prom
   }
 }
 
-export async function prepareDocumentRetry(documentId: string): Promise<{
+type PreparedJob = {
   document: LibraryDocument;
   job: () => Promise<void>;
-}> {
+};
+
+/**
+ * Claims the document before any in-progress status is written, and keeps
+ * the claim until the background job settles. See lib/documents/active-jobs.
+ */
+async function withJobClaim(
+  documentId: string,
+  prepare: () => Promise<PreparedJob>,
+): Promise<PreparedJob> {
+  const release = claimDocumentJob(documentId);
+  try {
+    const prepared = await prepare();
+    return { ...prepared, job: releaseWhenSettled(release, prepared.job) };
+  } catch (error) {
+    release();
+    throw error;
+  }
+}
+
+export async function prepareDocumentRetry(documentId: string): Promise<PreparedJob> {
+  // Load first, without a claim, so an interrupted document is recovered to
+  // "failed" and becomes retryable in the same request.
+  await getOwnedDocument(documentId);
+  return withJobClaim(documentId, () => prepareDocumentRetryJob(documentId));
+}
+
+async function prepareDocumentRetryJob(documentId: string): Promise<PreparedJob> {
   const row = await getOwnedDocument(documentId);
   if (row.status !== "failed") {
     throw new DocumentError("This document is not waiting for a retry.", 400);
@@ -167,10 +195,15 @@ export async function prepareDocumentRetry(documentId: string): Promise<{
 export async function prepareQuestionGeneration(
   documentId: string,
   options: { replace?: boolean; topicId?: string } = {},
-): Promise<{
-  document: LibraryDocument;
-  job: () => Promise<void>;
-}> {
+): Promise<PreparedJob> {
+  await getOwnedDocument(documentId);
+  return withJobClaim(documentId, () => prepareQuestionGenerationJob(documentId, options));
+}
+
+async function prepareQuestionGenerationJob(
+  documentId: string,
+  options: { replace?: boolean; topicId?: string },
+): Promise<PreparedJob> {
   const row = await getOwnedDocument(documentId);
   const topicId = options.topicId;
   const replace = options.replace === true;

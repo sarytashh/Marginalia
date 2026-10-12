@@ -6,3 +6,6 @@ export const TOPICS_FAILED_MESSAGE =
 
 export const QUESTIONS_FAILED_MESSAGE =
   "Marginalia could not write questions grounded in this material. Try this step again.";
+
+export const INTERRUPTED_MESSAGE =
+  "Processing stopped before it finished, usually because the server restarted. Try this step again.";

@@ -2,6 +2,7 @@ import "server-only";
 
 import { after } from "next/server";
 
+import { claimDocumentJob, releaseWhenSettled } from "@/lib/documents/active-jobs";
 import { DocumentError } from "@/lib/documents/http";
 import { processUploadedDocument } from "@/lib/documents/pipeline";
 import { createDocumentRow } from "@/lib/documents/repository";
@@ -56,6 +57,7 @@ export async function uploadPdfDocument(formData: FormData): Promise<LibraryDocu
     throw new DocumentError("Marginalia could not store this PDF. Try again.", 500);
   }
 
+  const release = claimDocumentJob(documentId);
   try {
     const document = await createDocumentRow({
       id: documentId,
@@ -65,19 +67,22 @@ export async function uploadPdfDocument(formData: FormData): Promise<LibraryDocu
       storagePath,
     });
 
-    after(() =>
-      processUploadedDocument({
-        bytes,
-        documentId,
-        filename: fileValue.name,
-        storagePath,
-        title: requestedTitle,
-        userId,
-      }),
+    after(
+      releaseWhenSettled(release, () =>
+        processUploadedDocument({
+          bytes,
+          documentId,
+          filename: fileValue.name,
+          storagePath,
+          title: requestedTitle,
+          userId,
+        }),
+      ),
     );
 
     return document;
   } catch (error) {
+    release();
     await supabase.storage.from(DOCUMENTS_BUCKET).remove([storagePath]);
     throw error;
   }

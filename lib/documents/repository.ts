@@ -1,6 +1,11 @@
 import "server-only";
 
 import type { Enums, Tables } from "@/lib/database.types";
+import {
+  isDocumentJobActive,
+  isInterruptedStatus,
+} from "@/lib/documents/active-jobs";
+import { INTERRUPTED_MESSAGE } from "@/lib/documents/constants";
 import { loadCountsForDocuments } from "@/lib/documents/counts";
 import { DocumentError } from "@/lib/documents/http";
 import { toLibraryDocument } from "@/lib/documents/map";
@@ -34,7 +39,7 @@ export async function listLibraryDocuments(): Promise<LibraryDocument[]> {
     throw new DocumentError("Marginalia could not load your materials. Try again.", 500);
   }
 
-  return withCounts(data);
+  return withCounts(await Promise.all(data.map(recoverInterruptedDocument)));
 }
 
 export async function getOwnedDocument(documentId: string): Promise<DocumentRow> {
@@ -56,7 +61,34 @@ export async function getOwnedDocument(documentId: string): Promise<DocumentRow>
     throw new DocumentError("That document is not in your library.", 404);
   }
 
-  return data;
+  return recoverInterruptedDocument(data);
+}
+
+/**
+ * A document left in an in-progress status with no live job in this process
+ * was interrupted (for example by a server restart). Mark it failed so the
+ * library shows Retry instead of a step that never finishes.
+ */
+async function recoverInterruptedDocument(row: DocumentRow): Promise<DocumentRow> {
+  if (!isInterruptedStatus(row.status, isDocumentJobActive(row.id))) {
+    return row;
+  }
+
+  const supabase = createServiceRoleClient();
+  const { data, error } = await supabase
+    .from("documents")
+    .update({ status: "failed", error_message: INTERRUPTED_MESSAGE })
+    .eq("id", row.id)
+    .eq("status", row.status)
+    .select("*")
+    .maybeSingle();
+
+  if (error) {
+    console.error(error);
+    return row;
+  }
+
+  return data ?? row;
 }
 
 export async function getOwnedLibraryDocument(
