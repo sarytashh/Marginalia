@@ -20,4 +20,12 @@ describe("isNonAnswer", () => {
       isNonAnswer("I have no idea, but the weights must be non-negative."),
     ).toBe(false);
   });
+
+  it("does not treat a short mathematical answer as a shrug", () => {
+    expect(isNonAnswer("(x + 4)^2")).toBe(false);
+    expect(isNonAnswer("(x + 2)(x + 8)")).toBe(false);
+    expect(isNonAnswer("x = 3")).toBe(false);
+    expect(isNonAnswer("42")).toBe(false);
+    expect(isNonAnswer("y' = 2x")).toBe(false);
+  });
 });

@@ -7,6 +7,8 @@ const SURRENDER_PATTERNS: readonly RegExp[] = [
   /^(不知道|我不知道|我不懂|不清楚|不会|我不会|没想法)$/,
 ];
 
+const MATH_ANSWER = /[\p{N}=+\-*/^√<>≤≥∫∑π]/u;
+
 const STOPWORDS = new Set([
   "a",
   "about",
@@ -93,6 +95,11 @@ export function isNonAnswer(answer: string): boolean {
   }
   if (SURRENDER_PATTERNS.some((pattern) => pattern.test(normalized))) {
     return true;
+  }
+  // Short mathematical answers such as "(x + 4)^2", "x = 3" or "42" have no
+  // two-letter words but are real attempts. Let the grader judge them.
+  if (MATH_ANSWER.test(normalized)) {
+    return false;
   }
   return contentWords(normalized).size === 0;
 }
