@@ -31,6 +31,7 @@ import {
   selectDuplicatesToRemove,
   type ReviewedQuestion,
 } from "@/lib/generation/duplicate-review";
+import { keepStudyPassages } from "@/lib/generation/study-text";
 import { selectTopicPassages } from "@/lib/generation/topic-passages";
 import { countWords } from "@/lib/generation/word-count";
 import { extractTopicsFromChunks } from "@/lib/generation/topics";
@@ -110,7 +111,7 @@ async function runStudyMaterialGeneration(
 
     let topics = await loadTopics(documentId);
     if (topics.length === 0) {
-      topics = await createTopics(documentId, chunks);
+      topics = await createTopics(documentId, keepStudyPassages(chunks));
     }
     topics = await collapseDuplicateTopics(documentId);
 
@@ -140,10 +141,12 @@ async function runStudyMaterialGeneration(
         limit(async () => {
           try {
             const passages = selectTopicPassages(
-              await searchChunks(
-                documentId,
-                `${topic.name}. ${topic.summary}`,
-                QUESTION_RETRIEVAL_LIMIT,
+              keepStudyPassages(
+                await searchChunks(
+                  documentId,
+                  `${topic.name}. ${topic.summary}`,
+                  QUESTION_RETRIEVAL_LIMIT,
+                ),
               ),
             );
 
