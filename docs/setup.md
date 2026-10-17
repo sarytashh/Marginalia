@@ -38,19 +38,19 @@ See `.env.example`. Put real values only in `.env.local` or the host dashboard, 
 | `NEXT_PUBLIC_SUPABASE_URL` | Same Supabase project URL | Same |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public anon key | Same |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only service role key | Same |
-| `AI_CHAT_BASE_URL` | `http://127.0.0.1:11434/v1` | `https://api.deepseek.com/v1` |
-| `AI_CHAT_API_KEY` | `ollama` | DeepSeek key from [platform.deepseek.com](https://platform.deepseek.com) |
-| `AI_CHAT_MODEL` | `qwen2.5:14b` | `deepseek-flash` |
-| `AI_CHAT_THINKING` | leave unset | leave unset (DeepSeek thinking is disabled automatically) |
-| `AI_EMBEDDING_BASE_URL` | `http://127.0.0.1:11434/v1` | `https://api.jina.ai/v1` |
-| `AI_EMBEDDING_API_KEY` | `ollama` | Jina key from [jina.ai](https://jina.ai) |
-| `AI_EMBEDDING_MODEL` | `bge-m3` | `jina-embeddings-v3` |
+| `AI_CHAT_BASE_URL` | `http://127.0.0.1:11434/v1` | `https://generativelanguage.googleapis.com/v1beta/openai/` |
+| `AI_CHAT_API_KEY` | `ollama` | Gemini key from [Google AI Studio](https://aistudio.google.com) |
+| `AI_CHAT_MODEL` | `qwen2.5:14b` | `gemini-3.5-flash-lite` |
+| `AI_CHAT_THINKING` | leave unset | leave unset |
+| `AI_EMBEDDING_BASE_URL` | `http://127.0.0.1:11434/v1` | `https://generativelanguage.googleapis.com/v1beta/openai/` |
+| `AI_EMBEDDING_API_KEY` | `ollama` | the same Gemini key |
+| `AI_EMBEDDING_MODEL` | `bge-m3` | the Gemini embedding model ID shown in AI Studio |
 | `AI_EMBEDDING_DIMENSIONS` | `1024` | `1024` |
 | `NEXT_PUBLIC_SITE_URL` | optional; defaults to `http://localhost:4317` | the public origin, e.g. `https://your-service.zeabur.app` |
 
-Production cannot use Ollama. Chat and embeddings are called from the host, not the browser, so a Hong Kong or Singapore server can reach DeepSeek and Jina even when a campus network cannot. SiliconFlow is not used: it requires mainland-China KYC.
+Production cannot use Ollama. Chat and embeddings are called from the host, not the browser. The Gemini API is not available from mainland China or Hong Kong, so host in **Singapore**. Choose a Flash-Lite chat model: on the free tier it allows far more requests per day than Flash, and one PDF takes 10 to 20 requests. Hosted embedding providers are asked for exactly `AI_EMBEDDING_DIMENSIONS` values; local Ollama is not.
 
-Jina `jina-embeddings-v3` is a different vector space from local `bge-m3`. Re-upload PDFs on the live app (or use Novita `baai/bge-m3` at `https://api.novita.ai/v3/openai` if this Supabase already holds Ollama vectors and you need them to stay searchable). Do not mix embedding models in one database.
+Gemini embeddings are a different vector space from local `bge-m3`. Do not mix embedding models in one database: if local development and the live app share a Supabase project, use the same embedding model in both and re-upload PDFs after switching.
 
 ## Production hosting
 

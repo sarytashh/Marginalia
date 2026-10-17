@@ -12,7 +12,7 @@ Lecture PDFs are easy to reread and hard to practice from. Generic quiz apps ask
 
 - **Next.js** App Router, TypeScript (strict), Tailwind CSS, shadcn/ui
 - **Supabase** — Postgres, pgvector, Auth (email magic links), private Storage, Row Level Security
-- **OpenAI-compatible AI clients** — chat and embeddings are separate env-configured endpoints. Local: Ollama (`qwen2.5:14b`, `bge-m3`). Production: DeepSeek chat + Jina embeddings.
+- **OpenAI-compatible AI clients** — chat and embeddings are separate env-configured endpoints. Local: Ollama (`qwen2.5:14b`, `bge-m3`). Hosted: Google Gemini (`gemini-3.5-flash-lite` chat, Gemini embeddings at 1024 dimensions).
 - **Vitest** for pure logic: chunking, scheduling, grounding checks, retries
 
 ## How it works
@@ -29,7 +29,7 @@ Lecture PDFs are easy to reread and hard to practice from. Generic quiz apps ask
 
 The grounding rule is the product. The model is not allowed to draw on general knowledge when writing questions or grading. System prompts live in `lib/ai/prompts/` so they can be reviewed in git. Raw model JSON never reaches the database: `completeStructured` validates every response with Zod and retries once on a schema miss. A question that cites a chunk id that was not retrieved is discarded before insert.
 
-The same idea shows up in the provider layer. Chat and embeddings are separate OpenAI-compatible clients configured only through environment variables, so a chat-only host is never asked for vectors, and the app can move between local Ollama and production DeepSeek + Jina without code changes.
+The same idea shows up in the provider layer. Chat and embeddings are separate OpenAI-compatible clients configured only through environment variables, so a chat-only host is never asked for vectors, and the app can move between local Ollama and hosted Gemini without code changes.
 
 ## Testing
 
@@ -37,7 +37,7 @@ The same idea shows up in the provider layer. Chat and embeddings are separate O
 
 ## Running it
 
-You need a Supabase project, Node 22, pnpm, and either Ollama (local) or DeepSeek + Jina keys (hosted). Full steps, environment variables, and hosting notes are in [docs/setup.md](docs/setup.md).
+You need a Supabase project, Node 22, pnpm, and either Ollama (local) or a Gemini API key from Google AI Studio (hosted). Full steps, environment variables, and hosting notes are in [docs/setup.md](docs/setup.md).
 
 ```bash
 pnpm install

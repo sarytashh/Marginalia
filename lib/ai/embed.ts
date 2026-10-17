@@ -4,6 +4,21 @@ import { getEmbeddingEnv } from "@/lib/ai/env";
 import { AiError, toAiError } from "@/lib/ai/errors";
 import { withRetry, type RetryOptions } from "@/lib/ai/retry";
 
+/**
+ * Hosted models such as Gemini return larger vectors by default and can
+ * shorten them on request; the database column is fixed at
+ * AI_EMBEDDING_DIMENSIONS. Local Ollama models have one native size and are
+ * not sent the parameter.
+ */
+export function shouldRequestDimensions(baseUrl: string): boolean {
+  try {
+    const host = new URL(baseUrl).hostname;
+    return !["localhost", "127.0.0.1", "::1", "[::1]"].includes(host);
+  } catch {
+    return false;
+  }
+}
+
 export type EmbedBatch = (input: string[]) => Promise<number[][]>;
 
 export type EmbedTextsOptions = {
@@ -21,6 +36,9 @@ async function embedBatchWithProvider(input: string[]): Promise<number[][]> {
     const response = await client.embeddings.create({
       model: env.embeddingModel,
       input,
+      ...(shouldRequestDimensions(env.baseUrl)
+        ? { dimensions: env.embeddingDimensions }
+        : {}),
     });
 
     return [...response.data]

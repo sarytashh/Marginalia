@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { embedTexts } from "@/lib/ai/embed";
+import { embedTexts, shouldRequestDimensions } from "@/lib/ai/embed";
 import { AiError } from "@/lib/ai/errors";
 
 describe("embedTexts", () => {
@@ -40,5 +40,18 @@ describe("embedTexts", () => {
       }),
     ).resolves.toEqual([[1, 2]]);
     expect(embedBatch).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("shouldRequestDimensions", () => {
+  it("asks hosted providers for the database vector size", () => {
+    expect(shouldRequestDimensions("https://generativelanguage.googleapis.com/v1beta/openai/")).toBe(true);
+    expect(shouldRequestDimensions("https://api.jina.ai/v1")).toBe(true);
+  });
+
+  it("leaves local Ollama and invalid URLs alone", () => {
+    expect(shouldRequestDimensions("http://127.0.0.1:11434/v1")).toBe(false);
+    expect(shouldRequestDimensions("http://localhost:11434/v1")).toBe(false);
+    expect(shouldRequestDimensions("not a url")).toBe(false);
   });
 });
