@@ -3,7 +3,9 @@ import "server-only";
 import pLimit from "p-limit";
 
 import { AiError } from "@/lib/ai/errors";
+import { completeStructured } from "@/lib/ai/complete-structured";
 import { getChatEnv } from "@/lib/ai/env";
+import { DUPLICATE_REVIEW_SYSTEM_PROMPT } from "@/lib/ai/prompts/duplicates";
 import type { Json } from "@/lib/database.types";
 import {
   NOT_ENOUGH_MATERIAL_MESSAGE,
@@ -23,6 +25,12 @@ import {
   QUESTION_RETRIEVAL_LIMIT,
 } from "@/lib/generation/limits";
 import { generateGroundedQuestions } from "@/lib/generation/questions";
+import {
+  duplicateReviewSchema,
+  formatQuestionList,
+  selectDuplicatesToRemove,
+  type ReviewedQuestion,
+} from "@/lib/generation/duplicate-review";
 import { selectTopicPassages } from "@/lib/generation/topic-passages";
 import { countWords } from "@/lib/generation/word-count";
 import { extractTopicsFromChunks } from "@/lib/generation/topics";
@@ -125,6 +133,7 @@ async function runStudyMaterialGeneration(
     // Topics whose generation threw (model or network errors), as opposed to
     // topics where the model found nothing groundable to ask.
     let failedTopics = 0;
+    const newQuestionIds: string[] = [];
 
     await Promise.all(
       selected.map((topic) =>
@@ -162,7 +171,7 @@ async function runStudyMaterialGeneration(
               return true;
             });
 
-            await insertQuestions(documentId, userId, topic.id, unique);
+            newQuestionIds.push(...(await insertQuestions(documentId, userId, topic.id, unique)));
           } catch (error) {
             failedTopics += 1;
             console.error(error);
@@ -170,6 +179,8 @@ async function runStudyMaterialGeneration(
         }),
       ),
     );
+
+    await removeDuplicateQuestions(documentId, newQuestionIds);
 
     const questionCount = await countQuestions(documentId);
     if (questionCount === 0) {
@@ -268,12 +279,13 @@ async function insertQuestions(
   userId: string,
   topicId: string,
   questions: Awaited<ReturnType<typeof generateGroundedQuestions>>,
-): Promise<void> {
+): Promise<string[]> {
   if (questions.length === 0) {
-    return;
+    return [];
   }
 
   const supabase = createServiceRoleClient();
+  const insertedIds: string[] = [];
 
   for (const question of questions) {
     const questionId = crypto.randomUUID();
@@ -307,6 +319,74 @@ async function insertQuestions(
       console.error(reviewError);
       throw new Error(QUESTIONS_FAILED_MESSAGE);
     }
+    insertedIds.push(questionId);
+  }
+
+  return insertedIds;
+}
+
+/**
+ * One model call over every question in the material, removing new
+ * questions that repeat an earlier one in different words. Best effort: if
+ * the review fails, the questions are kept as they are.
+ */
+async function removeDuplicateQuestions(
+  documentId: string,
+  newQuestionIds: readonly string[],
+): Promise<void> {
+  if (newQuestionIds.length < 2) {
+    return;
+  }
+
+  try {
+    const supabase = createServiceRoleClient();
+    const { data, error } = await supabase
+      .from("questions")
+      .select("id, prompt, topic_id")
+      .eq("document_id", documentId);
+    if (error || data === null) {
+      console.error(error);
+      return;
+    }
+
+    const isNew = new Set(newQuestionIds);
+    const order = new Map(newQuestionIds.map((id, index) => [id, index]));
+    const existing = data.filter((row) => !isNew.has(row.id));
+    const added = data
+      .filter((row) => isNew.has(row.id))
+      .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+    const questions: ReviewedQuestion[] = [...existing, ...added].map((row) => ({
+      id: row.id,
+      isNew: isNew.has(row.id),
+      prompt: row.prompt,
+      topicId: row.topic_id,
+    }));
+
+    const review = await completeStructured({
+      schema: duplicateReviewSchema,
+      system: DUPLICATE_REVIEW_SYSTEM_PROMPT,
+      temperature: 0,
+      user: `Questions:
+${formatQuestionList(questions)}
+
+Return JSON of the form:
+{
+  "duplicates": [{ "number": 7, "duplicateOf": 3 }]
+}`,
+    });
+
+    const toRemove = selectDuplicatesToRemove(questions, review.duplicates);
+    if (toRemove.length === 0) {
+      return;
+    }
+    const { error: deleteError } = await supabase.from("questions").delete().in("id", toRemove);
+    if (deleteError) {
+      console.error(deleteError);
+      return;
+    }
+    console.info("removeDuplicateQuestions", { documentId, removed: toRemove.length });
+  } catch (error) {
+    console.error(error);
   }
 }
 
