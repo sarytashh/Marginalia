@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Check, Monitor, Moon, Sun } from "lucide-react";
 
@@ -16,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { reloadAfterAuthChange } from "@/lib/auth/reload-after-auth";
 
 const themeOptions = [
   { value: "light", label: "Light", icon: Sun },
@@ -28,14 +28,12 @@ type UserMenuProps = {
 };
 
 export function UserMenu({ email }: UserMenuProps) {
-  const router = useRouter();
   const { theme, setTheme } = useTheme();
 
   async function signOut() {
     const supabase = createBrowserSupabaseClient();
     await supabase.auth.signOut();
-    router.push("/sign-in");
-    router.refresh();
+    reloadAfterAuthChange("/sign-in");
   }
 
   return (

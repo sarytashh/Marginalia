@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { reloadAfterAuthChange } from "@/lib/auth/reload-after-auth";
 
 export function AuthHashCatcher() {
   const router = useRouter();
@@ -34,8 +35,7 @@ export function AuthHashCatcher() {
         router.replace("/sign-in?error=invalid");
         return;
       }
-      router.replace(nextPath === "/sign-in" ? "/" : nextPath);
-      router.refresh();
+      reloadAfterAuthChange(nextPath === "/sign-in" ? "/" : nextPath);
     })();
   }, [router]);
 

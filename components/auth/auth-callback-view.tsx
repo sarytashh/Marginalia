@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { safeNextPath } from "@/lib/auth/next-path";
 import { otpTypesToTry } from "@/lib/auth/otp";
+import { reloadAfterAuthChange } from "@/lib/auth/reload-after-auth";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
 export function AuthCallbackView() {
@@ -31,8 +32,7 @@ export function AuthCallbackView() {
           fail(/expired|otp_expired/i.test(error.message) ? "expired" : "invalid");
           return;
         }
-        router.replace(nextPath);
-        router.refresh();
+        reloadAfterAuthChange(nextPath);
         return;
       }
 
@@ -44,8 +44,7 @@ export function AuthCallbackView() {
             token_hash: tokenHash,
           });
           if (!error) {
-            router.replace(nextPath);
-            router.refresh();
+            reloadAfterAuthChange(nextPath);
             return;
           }
         }
@@ -72,8 +71,7 @@ export function AuthCallbackView() {
             fail("invalid");
             return;
           }
-          router.replace(nextPath);
-          router.refresh();
+          reloadAfterAuthChange(nextPath);
           return;
         }
       }
