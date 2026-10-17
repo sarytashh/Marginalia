@@ -5,6 +5,7 @@ import {
   formatHeatmapSummary,
   formatProgressHeading,
   formatStreak,
+  formatTrendNote,
   heatmapLevel,
   scoreChartPoints,
   sortProgressTopics,
@@ -172,5 +173,20 @@ describe("scoreChartPoints", () => {
         percent: 50,
       },
     ]);
+  });
+});
+
+describe("formatTrendNote", () => {
+  it("counts down to the first trend line", () => {
+    expect(formatTrendNote(1)).toBe(
+      "Your score trend appears after 3 days of study. Study on 2 more days to see it.",
+    );
+    expect(formatTrendNote(2)).toBe(
+      "Your score trend appears after 3 days of study. Study on 1 more day to see it.",
+    );
+  });
+
+  it("is empty once there are enough days", () => {
+    expect(formatTrendNote(3)).toBe("");
   });
 });

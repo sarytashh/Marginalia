@@ -216,3 +216,15 @@ function capitalize(value: string): string {
   }
   return `${value[0]?.toUpperCase() ?? ""}${value.slice(1)}`;
 }
+
+/** A trend line needs a few points before it says anything. */
+export const MIN_TREND_DAYS = 3;
+
+export function formatTrendNote(studyDays: number): string {
+  const remaining = Math.max(0, MIN_TREND_DAYS - studyDays);
+  if (remaining === 0) {
+    return "";
+  }
+  const days = remaining === 1 ? "1 more day" : `${remaining} more days`;
+  return `Your score trend appears after ${MIN_TREND_DAYS} days of study. Study on ${days} to see it.`;
+}

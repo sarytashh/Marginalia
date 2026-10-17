@@ -10,7 +10,11 @@ import {
   YAxis,
 } from "recharts";
 
-import { scoreChartPoints } from "@/lib/progress/format";
+import {
+  formatTrendNote,
+  MIN_TREND_DAYS,
+  scoreChartPoints,
+} from "@/lib/progress/format";
 import type { ProgressDay } from "@/lib/progress/types";
 
 type ScoreChartProps = {
@@ -25,6 +29,31 @@ export function ScoreChart({ days }: ScoreChartProps) {
       <p className="text-muted-ink max-w-[34rem] text-[15px] leading-[1.65]">
         Average score will appear here after a few days of study.
       </p>
+    );
+  }
+
+  // One or two points draw a mostly empty chart. Show the days themselves
+  // until there is a trend to plot.
+  if (points.length < MIN_TREND_DAYS) {
+    return (
+      <div>
+        <ul className="flex flex-wrap gap-x-12 gap-y-6">
+          {points.map((point) => (
+            <li key={point.day}>
+              <p className="font-serif text-ink text-[44px] leading-none tabular-nums">
+                {point.percent}%
+              </p>
+              <p className="text-muted-ink mt-2 text-[13px]">
+                {point.label} ·{" "}
+                {point.attemptCount === 1 ? "1 answer" : `${point.attemptCount} answers`}
+              </p>
+            </li>
+          ))}
+        </ul>
+        <p className="text-muted-ink mt-6 max-w-[34rem] text-[14px] leading-[1.65]">
+          {formatTrendNote(points.length)}
+        </p>
+      </div>
     );
   }
 
