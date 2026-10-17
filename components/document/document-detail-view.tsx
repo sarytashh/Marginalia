@@ -7,6 +7,7 @@ import { MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
 import { DeleteMaterialDialog } from "@/components/document/delete-material-dialog";
+import { ReplaceMaterialDialog } from "@/components/document/replace-material-dialog";
 import { QuestionArchive } from "@/components/document/question-archive";
 import { TopicIndex } from "@/components/document/topic-index";
 import { ProcessingSteps } from "@/components/library/processing-steps";
@@ -53,6 +54,7 @@ export function DocumentDetailView({ initialDetail }: DocumentDetailViewProps) {
   const [retrying, setRetrying] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [replacing, setReplacing] = useState(false);
+  const [replaceOpen, setReplaceOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const { document, topics } = detail;
@@ -104,6 +106,16 @@ export function DocumentDetailView({ initialDetail }: DocumentDetailViewProps) {
     } finally {
       setGenerating(false);
     }
+  }
+
+  // Replacing deletes questions, answers and schedules, so ask first when
+  // there is anything to lose.
+  function requestReplace() {
+    if (document.questionCount > 0) {
+      setReplaceOpen(true);
+      return;
+    }
+    void handleReplace();
   }
 
   async function handleReplace() {
@@ -208,7 +220,7 @@ export function DocumentDetailView({ initialDetail }: DocumentDetailViewProps) {
         <button
           type="button"
           disabled={!canReplace}
-          onClick={() => void handleReplace()}
+          onClick={requestReplace}
           className="text-burgundy hover:text-burgundy-hover inline-flex min-h-11 items-center text-[14px] font-medium disabled:text-muted-ink disabled:opacity-60"
         >
           {replacing ? "Replacing topics…" : "Replace topics and questions"}
@@ -338,7 +350,7 @@ export function DocumentDetailView({ initialDetail }: DocumentDetailViewProps) {
             <button
               type="button"
               disabled={writing}
-              onClick={() => void handleReplace()}
+              onClick={requestReplace}
               className="bg-burgundy text-paper hover:bg-burgundy-hover mt-6 inline-flex min-h-11 items-center rounded-sm px-4 text-[14px] font-medium disabled:opacity-60"
             >
               {replacing ? "Replacing topics…" : "Replace topics and questions"}
@@ -346,6 +358,14 @@ export function DocumentDetailView({ initialDetail }: DocumentDetailViewProps) {
           ) : null}
         </div>
       ) : null}
+
+      <ReplaceMaterialDialog
+        open={replaceOpen}
+        onOpenChange={setReplaceOpen}
+        onConfirm={() => void handleReplace()}
+        questionCount={document.questionCount}
+        title={document.title}
+      />
 
       <DeleteMaterialDialog
         document={document}
