@@ -66,6 +66,15 @@ describe("keepGroundedQuestions", () => {
     ).toEqual([]);
   });
 
+  it("drops a short answer that asks the student to choose from missing options", () => {
+    expect(
+      keepGroundedQuestions(
+        [draft({ prompt: "Which of the following describes a limitation of MAE?" })],
+        labeled,
+      ),
+    ).toEqual([]);
+  });
+
   it("drops a question with an empty prompt even if citations are valid", () => {
     expect(
       keepGroundedQuestions([draft({ prompt: "   " })], labeled),

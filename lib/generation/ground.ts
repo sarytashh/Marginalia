@@ -60,6 +60,12 @@ function groundQuestion(
     return null;
   }
 
+  // "Which of the following..." needs options. As a short answer the
+  // student is asked to choose from a list that is never shown.
+  if (draft.kind === "short_answer" && /\bwhich of the following\b/i.test(prompt)) {
+    return null;
+  }
+
   const sourceChunkIds = resolveSourceChunkIds(draft.sourceChunkIds, labelToId, idSet);
   if (sourceChunkIds.length === 0) {
     return null;

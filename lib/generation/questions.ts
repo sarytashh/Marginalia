@@ -23,6 +23,7 @@ import { questionGenerationSchema } from "@/lib/generation/schemas";
 
 export async function generateGroundedQuestions(input: {
   existingPrompts: readonly string[];
+  otherTopicNames?: readonly string[];
   passages: readonly LabelableChunk[];
   topicName: string;
   topicSummary: string;
@@ -43,6 +44,7 @@ export async function generateGroundedQuestions(input: {
   const unique: GroundedQuestion[] = [];
 
   const first = await requestQuestions({
+    otherTopicNames: input.otherTopicNames ?? [],
     topicName: input.topicName,
     topicSummary: input.topicSummary,
     existingPrompts: input.existingPrompts,
@@ -56,6 +58,7 @@ export async function generateGroundedQuestions(input: {
   }
 
   const second = await requestQuestions({
+    otherTopicNames: input.otherTopicNames ?? [],
     topicName: input.topicName,
     topicSummary: input.topicSummary,
     existingPrompts: [...input.existingPrompts, ...unique.map((question) => question.prompt)],
@@ -69,6 +72,7 @@ export async function generateGroundedQuestions(input: {
 
 async function requestQuestions(input: {
   existingPrompts: readonly string[];
+  otherTopicNames: readonly string[];
   extraInstruction: string | null;
   passageBlock: string;
   topicName: string;
@@ -82,13 +86,21 @@ async function requestQuestions(input: {
   const extra =
     input.extraInstruction === null ? "" : `\n\n${input.extraInstruction}\n`;
 
+  // Topics that share a page retrieve the same passages. Naming the other
+  // topics keeps each topic's questions on its own idea instead of repeating
+  // a neighbour's.
+  const otherTopics =
+    input.otherTopicNames.length === 0
+      ? ""
+      : `\nOther topics in this material get their own questions. Do not ask about them here:\n${input.otherTopicNames.map((name) => `- ${name}`).join("\n")}\n`;
+
   const result = await completeStructured({
     schema: questionGenerationSchema,
     system: QUESTION_GENERATION_SYSTEM_PROMPT,
     temperature: input.extraInstruction === null ? 0.2 : 0.3,
     user: `Topic: ${input.topicName}
 Summary: ${input.topicSummary}
-${extra}
+${otherTopics}${extra}
 Write ${TARGET_QUESTIONS_PER_TOPIC} to ${MAX_QUESTIONS_PER_TOPIC} questions if the passages can support them. Include ${MIN_MULTIPLE_CHOICE_PER_TOPIC} to ${MAX_MULTIPLE_CHOICE_PER_TOPIC} multiple_choice questions with distractors taken from these passages. The rest should be short_answer.
 
 sourceChunkIds must use the CHUNK_01-style labels from the passages below. Do not invent labels. Do not duplicate these existing questions:

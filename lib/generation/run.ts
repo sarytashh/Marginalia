@@ -144,6 +144,9 @@ async function runStudyMaterialGeneration(
             }
 
             const questions = await generateGroundedQuestions({
+              otherTopicNames: topics
+                .filter((other) => other.id !== topic.id)
+                .map((other) => other.name),
               topicName: topic.name,
               topicSummary: topic.summary,
               existingPrompts: existingPromptTexts,

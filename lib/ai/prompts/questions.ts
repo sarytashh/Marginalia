@@ -23,6 +23,8 @@ Every question must be about the named topic. Passages often also cover neighbou
 Each prompt must test a different idea. Duplicate or near-duplicate questions are a bug, including the same question reworded.
 Favour understanding over recall. At most one third of the questions may simply ask for a definition or formula. The rest should ask why something holds, what happens when something changes, how two ideas compare, or how to apply a rule to a small case, as long as the passages support the answer.
 Each referenceAnswer is two to four sentences, still grounded only in the passages.
+Write prompts as a teacher would. Do not say "according to the text", "the provided text" or "the passage"; the student studies the material, not this request.
+A prompt that asks the student to choose ("Which of the following...") must be multiple_choice with options.
 Difficulty is 1 (introductory), 2 (standard), or 3 (challenging).
 
 Return ${MIN_QUESTIONS_PER_TOPIC} to ${MAX_QUESTIONS_PER_TOPIC} questions if the passages can support them. Aim for ${TARGET_QUESTIONS_PER_TOPIC} or more. Never pad.`;
