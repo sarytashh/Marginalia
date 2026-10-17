@@ -2,10 +2,11 @@
 // email, so testing is not blocked by Supabase's hourly email limit.
 //
 //   pnpm auth:link you@example.com
+//   pnpm auth:link you@example.com https://your-site.onrender.com
 //
 // Uses the service role key from .env.local, so it only runs on a machine
-// that already holds that key. The link is for the local app only and
-// works once.
+// that already holds that key. The link opens the local app unless a site
+// origin is given, and works once.
 
 import { createClient } from "@supabase/supabase-js";
 
@@ -25,6 +26,18 @@ async function main() {
     return;
   }
 
+  let origin = LOCAL_ORIGIN;
+  const site = process.argv[3]?.trim();
+  if (site !== undefined && site !== "") {
+    try {
+      origin = new URL(site).origin;
+    } catch {
+      console.error(`Not a site address: ${site}`);
+      process.exitCode = 1;
+      return;
+    }
+  }
+
   const { url } = getSupabasePublicEnv();
   const admin = createClient<Database>(url, getSupabaseServiceRoleKey(), {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -41,7 +54,7 @@ async function main() {
     return;
   }
 
-  const link = new URL("/auth/callback", LOCAL_ORIGIN);
+  const link = new URL("/auth/callback", origin);
   link.searchParams.set("token_hash", data.properties.hashed_token);
   link.searchParams.set("type", "magiclink");
 
