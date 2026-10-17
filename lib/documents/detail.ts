@@ -16,16 +16,23 @@ import {
   topicMastery,
 } from "@/lib/scheduler";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { cache } from "react";
 
 type QuestionRow = Tables<"questions">;
 type TopicRow = Tables<"topics">;
 
-export async function getDocumentDetail(documentId: string): Promise<DocumentDetail> {
-  const document = await getOwnedLibraryDocument(documentId);
-  const ownerId = await getDocumentOwnerId();
+// The page title (generateMetadata) and the page body both need the same
+// detail; cache() makes them share one load per request.
+export const getDocumentDetail = cache(loadDocumentDetail);
+
+async function loadDocumentDetail(documentId: string): Promise<DocumentDetail> {
   const supabase = createServiceRoleClient();
 
-  const [topicsResult, questionsResult] = await Promise.all([
+  // Load topics and questions alongside the ownership check instead of after
+  // it. If the check fails, Promise.all rejects and none of this is returned.
+  const [document, ownerId, topicsResult, questionsResult] = await Promise.all([
+    getOwnedLibraryDocument(documentId),
+    getDocumentOwnerId(),
     supabase.from("topics").select("*").eq("document_id", documentId),
     supabase.from("questions").select("*").eq("document_id", documentId),
   ]);

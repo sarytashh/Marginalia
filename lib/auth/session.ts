@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { User } from "@supabase/supabase-js";
+import { cache } from "react";
 
 import { DocumentError } from "@/lib/documents/http";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -12,7 +13,9 @@ export type SessionUser = {
   id: string;
 };
 
-export async function getSessionUser(): Promise<SessionUser | null> {
+// One Supabase round trip per request: the layout, page metadata and page
+// body all ask who is signed in, and each call used to go to the network.
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   try {
     const supabase = await createServerSupabaseClient();
     const {
@@ -28,7 +31,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   } catch {
     return null;
   }
-}
+});
 
 export async function requireSessionUser(): Promise<SessionUser> {
   const user = await getSessionUser();
