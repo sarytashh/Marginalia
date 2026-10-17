@@ -60,4 +60,30 @@ describe("findEquivalentReference", () => {
     expect(findEquivalentReference("(x + 2)(x + 8)", "(x + 4)^2")).toBeNull();
     expect(findEquivalentReference("It is a square", "(x + 4)^2")).toBeNull();
   });
+
+  it("does not credit a matching fragment cut out at an ellipsis", () => {
+    // Real case: the student left out the dot product but scored 100%
+    // because only "+ wd·xd + b" was compared.
+    expect(
+      findEquivalentReference(
+        "It is h(x) = w1*x1 + w2*x2 + ... + wd*xd + b, a weighted sum of the features plus a bias.",
+        "With d features, the hypothesis is written as w1·x1 + w2·x2 + ... + wd·xd + b. This formulation is usually written compactly as the dot product wT x + b.",
+      ),
+    ).toBeNull();
+  });
+
+  it("leaves answers that explain ideas in words to the grader", () => {
+    expect(
+      findEquivalentReference(
+        "x^2 + 1",
+        "The result is x^2 + 1, because the constant term survives and the linear terms cancel when the two brackets are expanded.",
+      ),
+    ).toBeNull();
+  });
+
+  it("still takes the shortcut for a short worked result", () => {
+    expect(
+      findEquivalentReference("(x+4)^2", "Factorizing gives x^2 + 8x + 16 = (x + 4)^2."),
+    ).toBe("(x + 4)^2");
+  });
 });

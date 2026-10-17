@@ -11,6 +11,11 @@ const MAX_VARIABLES = 3;
 const SAMPLE_POINTS = 8;
 const MIN_VALID_POINTS = 5;
 const RELATIVE_TOLERANCE = 1e-6;
+const MAX_REFERENCE_PROSE_WORDS = 10;
+
+function proseWordCount(text: string): number {
+  return (text.replace(/sqrt|sin|cos|tan|log|exp|abs|pi/g, "").match(/[\p{L}]{3,}/gu) ?? []).length;
+}
 
 /** Rewrites common typed math into mathjs syntax. */
 export function normalizeMathText(text: string): string {
@@ -24,6 +29,10 @@ export function normalizeMathText(text: string): string {
     .replace(/\bln\b/g, "log")
     .replace(/√\s*\(/g, "sqrt(")
     .replace(/√\s*([\p{L}\p{N}.]+)/gu, "sqrt($1)")
+    // An ellipsis ("x1 + ... + xd") is not something that can be evaluated.
+    // Keep it as one character so clause splitting on "." does not cut the
+    // expression into fragments, and so the parser rejects it.
+    .replace(/\.{3}/g, "…")
     .trim();
 }
 
@@ -51,6 +60,10 @@ export function finalMathResult(text: string): string | null {
 }
 
 function parseExpression(text: string): MathNode | null {
+  // A fragment such as "+ wd*xd + b" is part of a longer expression.
+  if (/^[+*/^]|[+\-*/^]$/.test(text)) {
+    return null;
+  }
   if (text === "" || /[\p{L}]{3,}/u.test(text.replace(/sqrt|sin|cos|tan|log|exp|abs|pi/g, ""))) {
     // Prose (three or more letters in a row that are not a function name).
     return null;
@@ -149,6 +162,12 @@ export function findEquivalentReference(
   const student = finalMathResult(studentAnswer);
   const reference = finalMathResult(referenceAnswer);
   if (student === null || reference === null) {
+    return null;
+  }
+  // Only take the shortcut when the reference answer is essentially a
+  // formula. When it also explains ideas in words, matching the formula is
+  // not the whole answer, so the grader must judge it.
+  if (proseWordCount(normalizeMathText(referenceAnswer).replace(reference, "")) > MAX_REFERENCE_PROSE_WORDS) {
     return null;
   }
   return areExpressionsEquivalent(student, reference) ? reference : null;
